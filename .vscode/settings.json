@@ -1,4 +1,10 @@
 {
   "git.ignoreLimitWarning": true,
-  "cSpell.words": ["commitlint", "preinstall", "rushstack", "setex"]
+  "cSpell.words": [
+    "commitlint",
+    "preinstall",
+    "rushstack",
+    "setex",
+    "wuthering"
+  ]
 }

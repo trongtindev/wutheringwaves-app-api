@@ -4,8 +4,7 @@
     "vercel:dev": "vercel dev",
     "lint": "echo OK",
     "format": "prettier --write api/",
-    "prepare": "husky",
-    "preinstall": "npx only-allow pnpm"
+    "prepare": "husky"
   },
   "dependencies": {
     "@vercel/kv": "^2.0.0",
@@ -25,7 +24,6 @@
     "@types/node": "^20.14.2",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.5",
-    "only-allow": "^1.2.1",
     "prettier": "^3.2.5"
   },
   "lint-staged": {

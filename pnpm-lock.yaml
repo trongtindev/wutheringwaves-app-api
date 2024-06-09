@@ -54,9 +54,6 @@ importers:
       lint-staged:
         specifier: ^15.2.5
         version: 15.2.5
-      only-allow:
-        specifier: ^1.2.1
-        version: 1.2.1
       prettier:
         specifier: ^3.2.5
         version: 3.3.1
@@ -1109,10 +1106,6 @@ packages:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
 
-  only-allow@1.2.1:
-    resolution: {integrity: sha512-M7CJbmv7UCopc0neRKdzfoGWaVZC+xC1925GitKH9EAqYFzX9//25Q7oX4+jw0tiCCj+t5l6VZh8UPH23NZkMA==}
-    hasBin: true
-
   p-limit@3.1.0:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
     engines: {node: '>=10'}
@@ -1426,10 +1419,6 @@ packages:
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
-
-  which-pm-runs@1.1.0:
-    resolution: {integrity: sha512-n1brCuqClxfFfq/Rb0ICg9giSZqCS+pLtccdag6C2HyufBrh3fBOiy9nb6ggRMvWOVH5GrdJskj5iGTZNxd7SA==}
-    engines: {node: '>=4'}
 
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -2633,10 +2622,6 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
-  only-allow@1.2.1:
-    dependencies:
-      which-pm-runs: 1.1.0
-
   p-limit@3.1.0:
     dependencies:
       yocto-queue: 0.1.0
@@ -2970,8 +2955,6 @@ snapshots:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
     optional: true
-
-  which-pm-runs@1.1.0: {}
 
   which@2.0.2:
     dependencies:
