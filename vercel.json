@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/controllers/**/*.ts": {
+      "memory": 1024
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/:match*",
+      "destination": "/api/controllers/:match*"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/crons/convene-summary",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

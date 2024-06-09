@@ -1,0 +1,15 @@
+{
+  "include": ["./api", "middleware.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "allowJs": true,
+    "esModuleInterop": true
+  },
+  "files": ["api/types.d.ts"]
+}
