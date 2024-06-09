@@ -5,6 +5,7 @@
     "preinstall",
     "rushstack",
     "setex",
+    "typecheck",
     "wuthering"
   ]
 }

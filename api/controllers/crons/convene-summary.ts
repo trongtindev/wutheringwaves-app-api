@@ -1,6 +1,5 @@
 import { InternalServerErrorException } from '../../common/exception';
 import { BaseResponse } from '../../common/response';
-import mongodbInitialize from '../../middlewares/mongodb';
 import { kv } from '@vercel/kv';
 import ConveneModel from '../../models/convene';
 
@@ -14,9 +13,6 @@ export async function GET(req: Request) {
       }).json();
     }
     await kv.setex('convene-summary', 60 * 5, true);
-
-    // initialize models
-    const mongo = await mongodbInitialize();
 
     await kv.del('convene-summary');
     return new BaseResponse(200, { message: 'OK' }).json();

@@ -4,7 +4,8 @@
     "vercel:dev": "vercel dev",
     "lint": "echo OK",
     "format": "prettier --write api/",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
     "@vercel/kv": "^2.0.0",
@@ -24,7 +25,8 @@
     "@types/node": "^20.14.2",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.5",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
   },
   "lint-staged": {
     "*.ts": [

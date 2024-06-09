@@ -6,7 +6,6 @@ import {
 import { BaseResponse } from '../../common/response';
 import { Md5 } from 'ts-md5';
 import ConveneModel from '../../models/convene';
-import mongodbInitialize from '../../middlewares/mongodb';
 
 interface ILog {
   cardPoolType: number;
@@ -89,7 +88,6 @@ export async function POST(request: Request) {
     });
 
     // initialize models
-    await mongodbInitialize();
     const bulks = items.map((e) => {
       return {
         updateOne: {
