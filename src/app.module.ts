@@ -63,7 +63,7 @@ if (admin.apps.length === 0) {
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRoot(
-      `${MONGODB_PROTOCOL}://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}:27017/?retryWrites=true&w=majority`,
+      `${MONGODB_PROTOCOL}://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}/?retryWrites=true&w=majority`,
       {
         dbName: process.env.MONGODB_NAME,
         autoIndex: true,
