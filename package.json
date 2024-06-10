@@ -1,5 +1,5 @@
 {
-  "name": "game-backend",
+  "name": "wutheringwaves.app-api",
   "main": "dist/main.js",
   "private": true,
   "version": "1.0.0",

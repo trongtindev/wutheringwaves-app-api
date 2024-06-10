@@ -30,9 +30,13 @@ export class AuthService {
     // save cache
     const verifyIdToken = await admin.auth().verifyIdToken(token);
     const sessionTtl = Math.floor(
-      verifyIdToken.exp - new Date().getTime() / 1000 - 30
+      verifyIdToken.exp - new Date().getTime() / 1000 - 60
     );
-    await this.cacheManager.set(sessionId, verifyIdToken, sessionTtl);
+    await this.cacheManager.set(
+      sessionId,
+      verifyIdToken,
+      sessionTtl < 0 ? 5 : sessionTtl
+    );
 
     return verifyIdToken;
   }

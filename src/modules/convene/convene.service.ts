@@ -91,10 +91,11 @@ export class ConveneService {
       throw new BadRequestException('some field missing');
     }
 
-    const items = response.data.map((e) => {
+    const items = response.data.map((e, i) => {
       const sign = Object.keys(e).map((key) => (e as any)[key]);
-      // FIXME: fix duplicated
-      const key = Md5.hashStr(sign.join('|') + player_id);
+      const key = Md5.hashStr(
+        i + sign.join('|') + player_id + args.cardPoolType
+      );
 
       return {
         ...e,
