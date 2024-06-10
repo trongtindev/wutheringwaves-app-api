@@ -1,0 +1,6 @@
+services:
+  api:
+    build: ./
+    restart: unless-stopped
+    volumes:
+      - ./tmp:/home/tmp

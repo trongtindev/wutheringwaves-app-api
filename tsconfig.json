@@ -1,15 +1,24 @@
 {
-  "include": ["./api", "middleware.ts"],
+  "include": ["./src"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "strict": true,
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "commonjs",
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "allowJs": true,
-    "esModuleInterop": true
-  },
-  "files": ["api/types.d.ts"]
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
 }

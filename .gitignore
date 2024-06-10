@@ -1,2 +1,8 @@
-.vercel
+tmp
+.git
+.env
+dist
 node_modules
+cache
+pnpm-lock.yaml
+proxies.txt

@@ -1,0 +1,113 @@
+{
+  "module template": {
+    "prefix": "module",
+    "body": [
+      "import { Module } from '@nestjs/common';",
+      "import { ExampleController } from './example.controller';",
+      "import { ExampleService } from './example.service';",
+      "",
+      "@Module({",
+      "  imports: [],",
+      "  controllers: [ExampleController],",
+      "  providers: [ExampleService],",
+      "  exports: [ExampleService]",
+      "})",
+      "export class ExampleModule {}"
+    ],
+    "description": "vue template"
+  },
+  "service template": {
+    "prefix": "service",
+    "body": [
+      "import { Injectable, Logger } from '@nestjs/common';",
+      "import { EventEmitter2 } from '@nestjs/event-emitter';",
+      "",
+      "@Injectable()",
+      "export class ExampleService {",
+      "  private logger = new Logger(ExampleService.name);",
+      "",
+      "  constructor(",
+      "    private eventEmitter: EventEmitter2,",
+      "  ) {}",
+      "}"
+    ],
+    "description": "service template"
+  },
+  "service with model template": {
+    "prefix": "service model",
+    "body": [
+      "import { Injectable, Logger } from '@nestjs/common';",
+      "import { Model } from 'mongoose';",
+      "import { InjectModel } from '@nestjs/mongoose';",
+      "import { EventEmitter2 } from '@nestjs/event-emitter';",
+      "",
+      "@Injectable()",
+      "export class ExampleService {",
+      "  private logger = new Logger(ExampleService.name);",
+      "",
+      "  constructor(",
+      "    @InjectModel(Example.name) private model: Model<Example>,",
+      "    private eventEmitter: EventEmitter2,",
+      "  ) {}",
+      "}"
+    ],
+    "description": "service with model template"
+  },
+  "schema template": {
+    "prefix": "schema",
+    "body": [
+      "import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';",
+      "import { Document, HydratedDocument, Types } from 'mongoose';",
+      "",
+      "export type ExampleDocument = HydratedDocument<Example>;",
+      "",
+      "@Schema({ collection: 'example' })",
+      "export class Example extends Document<Types.ObjectId> {",
+      "  @Prop({ required: true, index: true })",
+      "  user: Types.ObjectId;",
+      "",
+      "  @Prop({ default: () => new Date(), index: true })",
+      "  createdAt: Date;",
+      "",
+      "  @Prop({ default: () => new Date(), index: true })",
+      "  updatedAt: Date;",
+      "}",
+      "",
+      "export const ExampleSchema = SchemaFactory.createForClass(Example);",
+      ""
+    ],
+    "description": "schema template"
+  },
+  "schedule template": {
+    "prefix": "schedule",
+    "body": [
+      "import { Injectable } from '@nestjs/common';",
+      "import { Cron } from '@nestjs/schedule';",
+      "import { ExampleService } from './example.service';",
+      "",
+      "@Injectable()",
+      "export class OrdersSchedule {",
+      "  constructor(private exampleService: ExampleService) {}",
+      "",
+      "  @Cron('* * * * *')",
+      "  async start() {}",
+      "}",
+      ""
+    ],
+    "description": "schedule template"
+  },
+  "controller template": {
+    "prefix": "controller",
+    "body": [
+      "import { Controller, UseGuards } from '@nestjs/common';",
+      "import { ExampleService } from './example.service';",
+      "",
+      "@Controller('example')",
+      "export class ExampleController{",
+      "  constructor(private exampleService: ExampleService) {}",
+      "}",
+      ""
+    ],
+    "description": "controller template"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint/eslint-plugin"],
+  "extends": [
+    "plugin:prettier/recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "no-var": "warn",
+    "no-eval": "warn",
+    "no-duplicate-imports": "warn",
+    "no-duplicate-case": "warn",
+    "no-debugger": "warn",
+    "eqeqeq": "warn",
+    "prefer-const": [
+      "warn",
+      {
+        "destructuring": "all"
+      }
+    ],
+    "constructor-super": "warn",
+    "@typescript-eslint/interface-name-prefix": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "prettier/prettier": [
+      "warn",
+      {
+        "endOfLine": "auto",
+        "printWidth": 80,
+        "trailingComma": "none",
+        "semi": true,
+        "doubleQuote": true,
+        "jsxSingleQuote": true,
+        "singleQuote": true,
+        "useTabs": false,
+        "tabWidth": 2
+      }
+    ]
+  },
+  "overrides": []
+}

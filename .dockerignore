@@ -1,0 +1,7 @@
+db
+.git
+.github
+.vscode
+node_modules
+dist
+pnpm-lock.yaml

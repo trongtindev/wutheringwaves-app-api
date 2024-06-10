@@ -1,10 +1,23 @@
 {
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "always"
+  },
   "git.ignoreLimitWarning": true,
   "cSpell.words": [
     "commitlint",
+    "ipcity",
+    "ipcontinent",
+    "ipcountry",
+    "iplatitude",
+    "iplongitude",
+    "nestjs",
+    "paralleldrive",
     "preinstall",
     "rushstack",
     "setex",
+    "striptags",
     "typecheck",
     "wuthering"
   ]
