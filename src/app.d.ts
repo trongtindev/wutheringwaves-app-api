@@ -12,6 +12,7 @@ declare global {
       readonly REDIS_USER: string;
       readonly REDIS_PASS: string;
 
+      readonly MONGODB_PROTOCOL: string;
       readonly MONGODB_HOST: string;
       readonly MONGODB_NAME: string;
       readonly MONGODB_USER: string;
@@ -38,5 +39,4 @@ declare module 'http' {
   }
 }
 
-export { };
-
+export {};

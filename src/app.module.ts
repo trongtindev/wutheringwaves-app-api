@@ -29,7 +29,13 @@ assert(REDIS_USER);
 assert(REDIS_PASS);
 
 // mongodb
-const { MONGODB_HOST, MONGODB_NAME, MONGODB_USER, MONGODB_PASS } = process.env;
+const {
+  MONGODB_PROTOCOL,
+  MONGODB_HOST,
+  MONGODB_NAME,
+  MONGODB_USER,
+  MONGODB_PASS
+} = process.env;
 assert(MONGODB_HOST);
 assert(MONGODB_NAME);
 assert(MONGODB_USER);
@@ -57,7 +63,7 @@ if (admin.apps.length === 0) {
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRoot(
-      `mongodb://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}:27017/?retryWrites=true&w=majority`,
+      `${MONGODB_PROTOCOL}://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}:27017/?retryWrites=true&w=majority`,
       {
         dbName: process.env.MONGODB_NAME,
         autoIndex: true,
