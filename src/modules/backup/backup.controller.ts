@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  UseGuards
+} from '@nestjs/common';
 import { BackupService } from './backup.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { GetBackupQueryDto, PutBackupBodyDto } from './backup.dto';
@@ -26,5 +34,11 @@ export class BackupController {
     return await this.backupService.put(auth, {
       data: body.data
     });
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete()
+  async eraseAll(@AuthDecorator() auth: AuthData) {
+    return await this.backupService.eraseAll(auth);
   }
 }

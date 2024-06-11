@@ -1,14 +1,5 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { jwtDecode } from 'jwt-decode';
-import { Md5 } from 'ts-md5';
-import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import * as admin from 'firebase-admin';
 import { AuthData } from '../auth/auth.interface';
 
@@ -18,6 +9,10 @@ export class BackupService {
 
   constructor(private eventEmitter: EventEmitter2) {}
 
+  /**
+   *
+   * @param auth
+   */
   async get(
     auth: AuthData,
     options?: {
@@ -26,13 +21,19 @@ export class BackupService {
   ) {
     options ??= {};
 
-    const file = await admin
+    const exists = await admin
       .storage()
       .bucket()
       .file(`backup/${auth.uid}.json`)
-      .get({ autoCreate: false });
+      .exists();
 
-    if (await file[0].exists()) {
+    if (exists[0]) {
+      const file = await admin
+        .storage()
+        .bucket()
+        .file(`backup/${auth.uid}.json`)
+        .get();
+
       return {
         data: await (async () => {
           if (options.withData) {
@@ -51,6 +52,10 @@ export class BackupService {
     };
   }
 
+  /**
+   *
+   * @param auth
+   */
   async put(
     auth: AuthData,
     args: {
@@ -74,6 +79,24 @@ export class BackupService {
       .save(JSON.stringify(json));
     this.logger.verbose(`put(${auth.uid}) done! ${args.data.length}`);
 
-    return true;
+    return await this.get(auth);
+  }
+
+  /**
+   *
+   * @param auth
+   */
+  async eraseAll(auth: AuthData) {
+    this.logger.verbose(`eraseAll(${auth.uid})`);
+
+    const file = await admin
+      .storage()
+      .bucket()
+      .file(`backup/${auth.uid}.json`)
+      .get({ autoCreate: false });
+
+    if (await file[0].exists()) {
+      await file[0].delete();
+    }
   }
 }
