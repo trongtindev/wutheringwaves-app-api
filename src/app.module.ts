@@ -89,11 +89,6 @@ if (admin.apps.length === 0) {
         name: 'default',
         ttl: 10000,
         limit: 50
-      },
-      {
-        name: 'createResource',
-        ttl: 60000,
-        limit: 3
       }
     ]),
     // custom modules

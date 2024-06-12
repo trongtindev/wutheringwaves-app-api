@@ -31,7 +31,12 @@ export class TierListController {
     };
   }
 
-  @Throttle({ createResource: {} })
+  @Throttle({
+    create: {
+      ttl: 60000,
+      limit: 3
+    }
+  })
   @UseGuards(AuthGuard)
   @Post()
   async create(
