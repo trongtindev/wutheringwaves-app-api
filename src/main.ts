@@ -18,6 +18,7 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   app.useGlobalGuards(new AppGuard());
   app.useGlobalPipes(new ValidationPipe());
+  app.set('trust proxy', 1);
 
   await app.listen(process.env.PORT);
   console.log(`Local: http://localhost:${process.env.PORT}.`);
