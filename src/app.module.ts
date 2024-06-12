@@ -12,7 +12,11 @@ import { RedisClientOptions } from 'redis';
 import { AuthModule } from './modules/auth/auth.module';
 import { BackupModule } from './modules/backup/backup.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
-import { ConveneModule } from './modules/convene/convene.module.ts';
+import { ConveneModule } from './modules/convene/convene.module';
+import { TierListModule } from './modules/tier-list/tier-list.module';
+import { UserModule } from './modules/user/user.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 // environment
 process.env.NODE_ENV = process.env.NODE_ENV.split(' ')[0] as any;
@@ -80,11 +84,31 @@ if (admin.apps.length === 0) {
       username: process.env.REDIS_USER,
       password: process.env.REDIS_PASS
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 10000,
+        limit: 50
+      },
+      {
+        name: 'createResource',
+        ttl: 60000,
+        limit: 3
+      }
+    ]),
     // custom modules
     AuthModule,
     BackupModule,
     ProxyModule,
-    ConveneModule
+    ConveneModule,
+    TierListModule,
+    UserModule
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
   ]
 })
 export class AppModule {}

@@ -7,12 +7,16 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   private logger = new Logger(AuthGuard.name);
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<any>();
@@ -21,6 +25,7 @@ export class AuthGuard implements CanActivate {
 
     try {
       request.auth = await this.authService.verifyIdToken(authorization);
+      request.user = await this.userService.findByUid(request.auth.uid);
     } catch (error) {
       this.logger.verbose(error);
       throw new UnauthorizedException();
@@ -39,7 +44,10 @@ export class AuthGuard implements CanActivate {
 export class AuthGuardNullable implements CanActivate {
   private logger = new Logger(AuthGuard.name);
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<any>();
@@ -48,6 +56,7 @@ export class AuthGuardNullable implements CanActivate {
 
     try {
       request.auth = await this.authService.verifyIdToken(authorization);
+      request.user = await this.userService.findByUid(request.auth.uid);
     } catch (error) {
       this.logger.verbose(error);
     }

@@ -8,6 +8,9 @@ export class Convene extends Document<Types.ObjectId> {
   @Prop({ required: true, unique: true })
   key: string;
 
+  @Prop({ index: true })
+  playerId: number;
+
   @Prop({ required: true })
   name: string;
 

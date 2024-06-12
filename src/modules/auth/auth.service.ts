@@ -4,6 +4,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import * as admin from 'firebase-admin';
 import { Md5 } from 'ts-md5';
+import { AuthVerifyEventArgs } from './auth.interface';
+import { AuthEventType } from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,8 @@ export class AuthService {
       ignoreCache?: boolean;
     }
   ): Promise<DecodedIdToken> {
+    this.logger.verbose(`verifyIdToken`);
+
     options ??= {};
 
     // if cache
@@ -30,13 +34,23 @@ export class AuthService {
     // save cache
     const verifyIdToken = await admin.auth().verifyIdToken(token);
     const sessionTtl = Math.floor(
-      verifyIdToken.exp - new Date().getTime() / 1000 - 60
+      (verifyIdToken.exp - new Date().getTime() / 1000 - 60) * 1000
     );
     await this.cacheManager.set(
       sessionId,
       verifyIdToken,
       sessionTtl < 0 ? 5 : sessionTtl
     );
+
+    // emit events
+    const getUser = await admin.auth().getUser(verifyIdToken.uid);
+    const event: AuthVerifyEventArgs = {
+      auth: verifyIdToken,
+      userRecord: getUser
+    };
+
+    await this.eventEmitter.emitAsync(AuthEventType.afterVerifyAsync, event);
+    this.eventEmitter.emit(AuthEventType.afterVerify, event);
 
     return verifyIdToken;
   }

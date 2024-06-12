@@ -17,6 +17,9 @@ export class ConveneService {
     private proxyService: ProxyService
   ) {}
 
+  /**
+   *
+   */
   async import(
     url: string,
     args: {
@@ -91,18 +94,22 @@ export class ConveneService {
       throw new BadRequestException('some field missing');
     }
 
-    const items = response.data.map((e, i) => {
-      const sign = Object.keys(e).map((key) => (e as any)[key]);
-      const key = Md5.hashStr(
-        i + sign.join('|') + player_id + args.cardPoolType
-      );
+    const items = response.data
+      .sort((a, b) => {
+        return new Date(a.time).getTime() - new Date(b.time).getTime();
+      })
+      .map((e, i) => {
+        const sign = Object.keys(e).map((key) => (e as any)[key]);
+        const key = Md5.hashStr(
+          i + sign.join('|') + player_id + args.cardPoolType
+        );
 
-      return {
-        ...e,
-        cardPoolType: args.cardPoolType,
-        key
-      };
-    });
+        return {
+          ...e,
+          cardPoolType: args.cardPoolType,
+          key
+        };
+      });
 
     // initialize models
     const writes = items.map((e) => {
@@ -114,7 +121,8 @@ export class ConveneService {
             qualityLevel: e.qualityLevel,
             resourceId: e.resourceId,
             resourceType: e.resourceType,
-            createdAt: new Date(e.time)
+            createdAt: new Date(e.time),
+            playerId: parseInt(player_id)
           },
           upsert: true
         }
@@ -127,4 +135,9 @@ export class ConveneService {
       items
     };
   }
+
+  /**
+   *
+   */
+  async globalStatsCalculate() {}
 }
