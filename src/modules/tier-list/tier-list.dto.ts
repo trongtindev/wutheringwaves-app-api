@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsHexColor,
   IsObject,
+  IsOptional,
   IsString,
   Length,
   ValidateNested
@@ -43,4 +44,13 @@ export class CreateTierListBodyDto {
   rows: TierListRowDto[];
 }
 
-export class GetListTierListQueryDto extends QueryDto {}
+export class GetListTierListQueryDto extends QueryDto {
+  @IsOptional()
+  @IsEnum(TierListType)
+  type?: TierListType;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  search?: string;
+}

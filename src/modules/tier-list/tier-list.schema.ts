@@ -11,17 +11,17 @@ export class TierList extends Document<Types.ObjectId> {
   @Prop({ required: true })
   type: string;
 
-  @Prop({ index: true })
+  @Prop({ index: true, text: true })
   title: string;
 
   @Prop({ index: true, default: 0 })
   likes: number;
 
-  @Prop({ required: true })
-  content: string;
-
   @Prop({ index: true, default: 0 })
   dislikes: number;
+
+  @Prop({ required: true })
+  content: string;
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;

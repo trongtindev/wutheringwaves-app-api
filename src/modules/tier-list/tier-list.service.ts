@@ -33,11 +33,21 @@ export class TierListService {
 
   async list(query?: {
     sort?: 'likes' | 'createAt';
+    type?: TierListType;
     search?: string;
     offset?: number;
     limit?: number;
   }): Promise<{ total: number; items: TierListDocument[] }> {
+    query ??= {};
+    query.limit ??= 20;
+    query.offset ??= 0;
+
     const filter: any = {};
+    if (query.search) {
+      filter.$text = {
+        $search: query.search
+      };
+    }
 
     const total = await this.tierListModel.countDocuments(filter);
     const items = await this.tierListModel

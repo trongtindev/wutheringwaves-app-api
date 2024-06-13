@@ -17,6 +17,8 @@ export class TierListController {
   @Get()
   async list(@Query() query: GetListTierListQueryDto) {
     const result = await this.tierListService.list({
+      type: query.type,
+      search: query.search,
       limit: query.limit,
       offset: query.offset
     });

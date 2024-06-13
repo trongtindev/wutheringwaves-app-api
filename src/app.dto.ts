@@ -1,12 +1,15 @@
-import { Max, Min, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Max, Min, IsOptional } from 'class-validator';
 
 export class QueryDto {
-  @ValidateIf((object, value) => typeof value !== 'undefined')
+  @Type(() => Number)
+  @IsOptional()
   @Min(1)
   @Max(100)
   limit?: number;
 
-  @ValidateIf((object, value) => typeof value !== 'undefined')
+  @Type(() => Number)
+  @IsOptional()
   @Min(0)
   offset?: number;
 }
