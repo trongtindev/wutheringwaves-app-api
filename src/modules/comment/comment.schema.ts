@@ -25,10 +25,19 @@ export type CommentDocument = HydratedDocument<Comment>;
 @Schema({ collection: 'comments' })
 export class Comment extends Document<Types.ObjectId> {
   @Prop({ required: true, index: true })
+  channel: Types.ObjectId;
+
+  @Prop({ required: true, index: true })
   user: Types.ObjectId;
 
   @Prop()
   content: string;
+
+  @Prop({ default: [] })
+  replies: Types.ObjectId[];
+
+  @Prop({ index: true })
+  parent?: Types.ObjectId;
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
