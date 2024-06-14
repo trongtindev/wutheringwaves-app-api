@@ -2,10 +2,15 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthData } from '../auth/auth.interface';
 import { Md5 } from 'ts-md5';
-import { Convene } from './convene.schema';
+import { Convene, ConveneChunk } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ProxyService } from '../proxy/proxy.service';
+import { ConveneEventType } from './convene.types';
+import {
+  IAfterImportConveneEventArgs,
+  IConveneHistory
+} from './convene.interface';
 
 @Injectable()
 export class ConveneService {
@@ -14,6 +19,8 @@ export class ConveneService {
   constructor(
     private eventEmitter: EventEmitter2,
     @InjectModel(Convene.name) private conveneModel: Model<Convene>,
+    @InjectModel(ConveneChunk.name)
+    private conveneChunkModel: Model<ConveneChunk>,
     private proxyService: ProxyService
   ) {}
 
@@ -66,13 +73,7 @@ export class ConveneService {
 
     // check response
     const response: {
-      data?: {
-        name: string;
-        qualityLevel: number;
-        resourceId: number;
-        resourceType: string;
-        time: string;
-      }[];
+      data?: IConveneHistory[];
       message?: string;
     } = JSON.parse(request.data.text);
     if (response.message !== 'success') {
@@ -111,29 +112,39 @@ export class ConveneService {
         };
       });
 
-    // initialize models
-    const writes = items.map((e) => {
-      return {
-        updateOne: {
-          filter: { key: e.key },
-          update: {
-            name: e.name,
-            qualityLevel: e.qualityLevel,
-            resourceId: e.resourceId,
-            resourceType: e.resourceType,
-            createdAt: new Date(e.time),
-            playerId: parseInt(player_id)
-          },
-          upsert: true
-        }
-      };
-    });
-    await this.conveneModel.bulkWrite(writes);
+    // emit event
+    const eventArgs: IAfterImportConveneEventArgs = {
+      playerId: parseInt(player_id),
+      items,
+      cardPoolType: args.cardPoolType
+    };
+    await this.eventEmitter.emitAsync(
+      ConveneEventType.afterImportAsync,
+      eventArgs
+    );
+    this.eventEmitter.emit(ConveneEventType.afterImport, eventArgs);
 
     return {
       total: items.length,
       items
     };
+  }
+
+  /**
+   *
+   */
+  async createChunk(
+    playerId: number,
+    args: {
+      items: IConveneHistory[];
+      cardPoolType: number;
+    }
+  ) {
+    return await this.conveneChunkModel.create({
+      playerId,
+      items: args.items,
+      cardPoolType: args.cardPoolType
+    });
   }
 
   /**

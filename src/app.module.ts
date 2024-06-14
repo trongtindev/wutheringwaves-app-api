@@ -17,6 +17,7 @@ import { TierListModule } from './modules/tier-list/tier-list.module';
 import { UserModule } from './modules/user/user.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { BullModule } from '@nestjs/bull';
 
 // environment
 process.env.NODE_ENV = process.env.NODE_ENV.split(' ')[0] as any;
@@ -27,8 +28,9 @@ if (process.env.NODE_ENV === 'development') {
 dotenv.config({ path: '.env', override: true });
 
 // redis
-const { REDIS_HOST, REDIS_USER, REDIS_PASS } = process.env;
+const { REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASS } = process.env;
 assert(REDIS_HOST);
+assert(REDIS_PORT);
 assert(REDIS_USER);
 assert(REDIS_PASS);
 
@@ -69,7 +71,7 @@ if (admin.apps.length === 0) {
     MongooseModule.forRoot(
       `${MONGODB_PROTOCOL}://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}/?retryWrites=true&w=majority`,
       {
-        dbName: process.env.MONGODB_NAME,
+        dbName: MONGODB_NAME,
         autoIndex: true,
         autoCreate: true
       }
@@ -78,11 +80,11 @@ if (admin.apps.length === 0) {
       isGlobal: true,
       store: redisStore,
       socket: {
-        port: parseInt(process.env.REDIS_PORT),
+        port: parseInt(REDIS_PORT),
         host: process.env.REDIS_HOST
       },
-      username: process.env.REDIS_USER,
-      password: process.env.REDIS_PASS
+      username: REDIS_USER,
+      password: REDIS_PASS
     }),
     ThrottlerModule.forRoot([
       {
@@ -91,6 +93,14 @@ if (admin.apps.length === 0) {
         limit: 50
       }
     ]),
+    BullModule.forRoot({
+      redis: {
+        host: REDIS_HOST,
+        port: parseInt(REDIS_PORT),
+        username: REDIS_USER,
+        password: REDIS_PASS
+      }
+    }),
     // custom modules
     AuthModule,
     BackupModule,

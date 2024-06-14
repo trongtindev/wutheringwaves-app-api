@@ -22,8 +22,6 @@ export class AuthService {
       ignoreCache?: boolean;
     }
   ): Promise<DecodedIdToken> {
-    this.logger.verbose(`verifyIdToken`);
-
     options ??= {};
 
     // if cache
