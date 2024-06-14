@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         node-version:
-          - 18.x
+          - 20.x
         redis-version: [5]
     steps:
       - uses: actions/checkout@v4
