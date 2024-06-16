@@ -6,3 +6,4 @@ node_modules
 cache
 pnpm-lock.yaml
 proxies.txt
+.tmp
