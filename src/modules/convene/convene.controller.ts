@@ -4,7 +4,9 @@ import { AuthGuardNullable } from '../auth/auth.guard';
 import { AuthDecorator } from '../auth/auth.decorator';
 import { AuthData } from '../auth/auth.interface';
 import { ImportConveneBodyDto } from './convene.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('convenes')
 @Controller('convenes')
 export class ConveneController {
   constructor(private conveneService: ConveneService) {}

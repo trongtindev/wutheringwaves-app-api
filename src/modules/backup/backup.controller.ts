@@ -12,11 +12,14 @@ import { AuthGuard } from '../auth/auth.guard';
 import { GetBackupQueryDto, PutBackupBodyDto } from './backup.dto';
 import { AuthDecorator } from '../auth/auth.decorator';
 import { AuthData } from '../auth/auth.interface';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('backup')
 @Controller('backup')
 export class BackupController {
   constructor(private backupService: BackupService) {}
 
+  @ApiResponse({ description: 'Get backup info' })
   @UseGuards(AuthGuard)
   @Get()
   async get(
@@ -28,6 +31,7 @@ export class BackupController {
     });
   }
 
+  @ApiResponse({ description: 'Upload new backup' })
   @UseGuards(AuthGuard)
   @Post()
   async put(@AuthDecorator() auth: AuthData, @Body() body: PutBackupBodyDto) {
@@ -36,6 +40,7 @@ export class BackupController {
     });
   }
 
+  @ApiResponse({ description: 'Delete current backup' })
   @UseGuards(AuthGuard)
   @Delete()
   async eraseAll(@AuthDecorator() auth: AuthData) {

@@ -20,7 +20,9 @@ import {
   ReportCommentBodyDto,
   UpdateCommentBodyDto
 } from './comment.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('comments')
 @Controller('comments')
 export class CommentController {
   constructor(private commentService: CommentService) {}

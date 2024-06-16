@@ -36,6 +36,9 @@ export class Comment extends Document<Types.ObjectId> {
   @Prop({ default: [] })
   replies: Types.ObjectId[];
 
+  @Prop({ default: [] })
+  attachments: Types.ObjectId[];
+
   @Prop({ index: true })
   parent?: Types.ObjectId;
 

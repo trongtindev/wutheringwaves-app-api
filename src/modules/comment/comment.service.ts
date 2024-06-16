@@ -11,6 +11,7 @@ import { Model, Types } from 'mongoose';
 import { UserDocument } from '../user/user.schema';
 import { IAfterCreateCommentEventArgs } from './comment.interface';
 import { CommentEventType } from './comment.types';
+import { FileService } from '../file/file.service';
 
 @Injectable()
 export class CommentService {
@@ -20,7 +21,8 @@ export class CommentService {
     private eventEmitter: EventEmitter2,
     @InjectModel(Comment.name) private commentModel: Model<Comment>,
     @InjectModel(CommentChannel.name)
-    private commentChannelModel: Model<CommentChannel>
+    private commentChannelModel: Model<CommentChannel>,
+    private fileService: FileService
   ) {}
 
   async upsertChannel(url: string): Promise<CommentChannelDocument> {
@@ -40,6 +42,7 @@ export class CommentService {
       channel: string;
       content: string;
       parent?: Types.ObjectId;
+      attachments?: Types.ObjectId[];
     }
   ): Promise<CommentDocument> {
     const channel = await this.upsertChannel(args.channel);

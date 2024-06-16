@@ -12,11 +12,15 @@ import { FileService } from './file.service';
 import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import { IFile } from './file.interface';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('files')
+@ApiBearerAuth()
 @Controller('files')
 export class FileController {
   constructor(private fileService: FileService) {}
 
+  @ApiResponse({})
   @UseGuards(AuthGuard)
   @FormDataRequest()
   @Post()
