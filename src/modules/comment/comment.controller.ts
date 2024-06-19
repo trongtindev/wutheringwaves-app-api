@@ -27,12 +27,24 @@ import { ApiTags } from '@nestjs/swagger';
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
-  @UseGuards(AuthGuard)
   @Get()
-  async listComments(
+  async listComment(
     @UserDecorator() user: UserDocument,
     @Query() query: ListCommentQueryDto
-  ) {}
+  ) {
+    const result = await this.commentService.listComment(query.channel, {
+      limit: query.limit,
+      offset: query.offset
+    });
+    return {
+      total: result.total,
+      items: await Promise.all(
+        result.items.map(async (e) => {
+          return await this.commentService.resolve(e);
+        })
+      )
+    };
+  }
 
   @UseGuards(AuthGuard)
   @Post()

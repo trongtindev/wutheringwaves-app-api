@@ -9,7 +9,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserDocument } from '../user/user.schema';
-import { IAfterCreateCommentEventArgs } from './comment.interface';
+import { IAfterCreateCommentEventArgs, IComment } from './comment.interface';
 import { CommentEventType } from './comment.types';
 import { FileService } from '../file/file.service';
 
@@ -25,6 +25,10 @@ export class CommentService {
     private fileService: FileService
   ) {}
 
+  async resolve(document: CommentDocument): Promise<IComment> {
+    return {} as any;
+  }
+
   async upsertChannel(url: string): Promise<CommentChannelDocument> {
     const document = await this.commentChannelModel.findOne({
       url
@@ -34,6 +38,23 @@ export class CommentService {
     return await this.commentChannelModel.create({
       url
     });
+  }
+
+  async listComment(
+    url: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+    }
+  ) {
+    options ??= {};
+
+    const channel = await this.upsertChannel(url);
+
+    return {
+      total: 0,
+      items: []
+    };
   }
 
   async createComment(

@@ -5,12 +5,14 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  Length
+  Length,
+  ValidateIf
 } from 'class-validator';
 
 export class ListCommentQueryDto extends QueryDto {
   @ApiProperty({ description: '...' })
   @IsUrl()
+  @ValidateIf(() => process.env.NODE_ENV === 'production')
   channel: string;
 }
 

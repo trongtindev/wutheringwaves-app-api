@@ -20,6 +20,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bull';
 import { CommentModule } from './modules/comment/comment.module';
 import { FileModule } from './modules/file/file.module';
+import { MapModule } from './modules/map/map.module';
 
 // environment
 process.env.NODE_ENV = process.env.NODE_ENV.split(' ')[0] as any;
@@ -111,7 +112,8 @@ if (admin.apps.length === 0) {
     TierListModule,
     UserModule,
     CommentModule,
-    FileModule
+    FileModule,
+    MapModule
   ],
   providers: [
     {

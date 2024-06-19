@@ -13,6 +13,7 @@ import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import { IFile } from './file.interface';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('files')
 @ApiBearerAuth()
@@ -21,6 +22,12 @@ export class FileController {
   constructor(private fileService: FileService) {}
 
   @ApiResponse({})
+  @Throttle({
+    upload: {
+      ttl: 60000,
+      limit: 5
+    }
+  })
   @UseGuards(AuthGuard)
   @FormDataRequest()
   @Post()

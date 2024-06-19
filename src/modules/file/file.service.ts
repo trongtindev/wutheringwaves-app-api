@@ -100,7 +100,7 @@ export class FileService implements OnApplicationBootstrap {
     return await this.client.send(
       new DeleteObjectCommand({
         Key: key,
-        Bucket: process.env.AWS_S3_BUCKET
+        Bucket: process.env.FILE_S3_BUCKET
       })
     );
   }
