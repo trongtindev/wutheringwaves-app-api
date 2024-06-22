@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, UserDocument } from './user.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -21,6 +21,12 @@ export class UserService {
       name: document.name,
       photoUrl: document.photoUrl
     };
+  }
+
+  async get(id: string | Types.ObjectId): Promise<UserDocument> {
+    const document = await this.userModel.findById(id);
+    if (!document) throw new NotFoundException();
+    return document;
   }
 
   async findById(id: string | Types.ObjectId) {

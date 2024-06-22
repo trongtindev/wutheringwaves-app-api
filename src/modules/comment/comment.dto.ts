@@ -1,5 +1,6 @@
 import { QueryDto } from '@/app.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
 import {
   IsMongoId,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   Length,
   ValidateIf
 } from 'class-validator';
+import striptags from 'striptags';
 
 export class ListCommentQueryDto extends QueryDto {
   @ApiProperty({ description: '...' })
@@ -25,12 +27,13 @@ export class CommentParamDto {
 export class CreateCommentBodyDto {
   @ApiProperty({ description: '...' })
   @IsUrl()
-  @Length(1, 100)
+  @ValidateIf(() => process.env.NODE_ENV === 'production')
   channel: string;
 
   @ApiProperty({ description: '...' })
   @IsString()
-  @Length(8, 500)
+  @Length(6, 500)
+  @Transform(({ value }: TransformFnParams) => striptags(value, []).trim())
   content: string;
 
   @ApiProperty({ description: '...' })
@@ -47,13 +50,14 @@ export class CreateCommentBodyDto {
 export class UpdateCommentBodyDto {
   @ApiProperty({ description: '...' })
   @IsString()
-  @Length(8, 500)
+  @Length(6, 500)
+  @Transform(({ value }: TransformFnParams) => striptags(value, []).trim())
   content: string;
 }
 
 export class ReportCommentBodyDto {
   @ApiProperty({ description: '...' })
   @IsString()
-  @Length(8, 500)
+  @Length(10, 500)
   reason: string;
 }

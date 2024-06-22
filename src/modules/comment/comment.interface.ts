@@ -1,12 +1,16 @@
+import { IFile } from '../file/file.interface';
 import { IUser } from '../user/user.interface';
 import { CommentDocument } from './comment.schema';
 
-export class IComment {
+export interface IComment {
   id: string;
-  user: IUser;
+  user: IUser | string;
   content: string;
-  createdAt: Date;
+  likes: number;
+  dislikes: number;
   updatedAt: Date;
+  createdAt: Date;
+  attachments: IFile[];
 }
 
 export interface IAfterCreateCommentEventArgs {

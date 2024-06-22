@@ -39,6 +39,8 @@ export class FileEvents implements OnApplicationBootstrap {
       _id: args.document._id,
       file: tempFile
     };
-    await this.fileQueue.add('optimize', jobData);
+    await this.fileQueue.add('optimize', jobData, {
+      delay: 60 * 5 * 1000
+    });
   }
 }

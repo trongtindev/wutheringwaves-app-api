@@ -2,7 +2,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnApplicationBootstrap
+  OnApplicationBootstrap,
+  ServiceUnavailableException
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -142,6 +143,10 @@ export class FileService implements OnApplicationBootstrap {
     return document;
   }
 
+  async findById(id: string | Types.ObjectId): Promise<FileDocument> {
+    return await this.model.findById(id);
+  }
+
   async upload(
     user: UserDocument,
     memoryStoredFile: MemoryStoredFile
@@ -244,7 +249,7 @@ export class FileService implements OnApplicationBootstrap {
 
     const items = await this.model
       .find({
-        expiredAt: {
+        expiresIn: {
           $gte: 0,
           $lte: expires
         }
@@ -263,5 +268,26 @@ export class FileService implements OnApplicationBootstrap {
         })
       );
     });
+  }
+
+  async setExpire(id: Types.ObjectId, expiresIn?: Date | number) {
+    expiresIn ??= 0;
+    this.logger.verbose(`setExpire(${id}) ${expiresIn}`);
+
+    const result = await this.model.updateOne(
+      {
+        _id: id
+      },
+      {
+        $set: {
+          expiresIn:
+            typeof expiresIn === 'number' ? new Date(expiresIn) : expiresIn
+        }
+      }
+    );
+    if (result.modifiedCount === 0) {
+      this.logger.verbose(`setExpire(${id}) ${expiresIn} modifiedCount===0`);
+      throw new ServiceUnavailableException();
+    }
   }
 }

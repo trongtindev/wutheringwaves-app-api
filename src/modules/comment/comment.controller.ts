@@ -21,6 +21,8 @@ import {
   UpdateCommentBodyDto
 } from './comment.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Types } from 'mongoose';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -46,12 +48,29 @@ export class CommentController {
     };
   }
 
+  @Throttle({
+    default: {
+      ttl: 60 * 15 * 1000,
+      limit: 10
+    }
+  })
   @UseGuards(AuthGuard)
   @Post()
   async createComment(
     @UserDecorator() user: UserDocument,
     @Body() body: CreateCommentBodyDto
-  ) {}
+  ) {
+    const result = await this.commentService.createComment(user._id, {
+      channel: body.channel,
+      content: body.content,
+      attachments: body.attachments
+        ? body.attachments.map((e) => {
+            return new Types.ObjectId(e);
+          })
+        : undefined
+    });
+    return await this.commentService.resolve(result);
+  }
 
   @UseGuards(AuthGuard)
   @Patch('comments/:id')
@@ -68,6 +87,12 @@ export class CommentController {
     @Param() param: CommentParamDto
   ) {}
 
+  @Throttle({
+    default: {
+      ttl: 60000,
+      limit: 2
+    }
+  })
   @UseGuards(AuthGuard)
   @Post('comments/:id/report')
   async reportComment(

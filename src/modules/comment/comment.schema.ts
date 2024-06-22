@@ -27,11 +27,17 @@ export class Comment extends Document<Types.ObjectId> {
   @Prop({ required: true, index: true })
   channel: Types.ObjectId;
 
-  @Prop({ required: true, index: true })
+  @Prop({ index: true })
   user: Types.ObjectId;
 
   @Prop()
   content: string;
+
+  @Prop({ default: [], index: true })
+  likes: Types.ObjectId[];
+
+  @Prop({ default: [], index: true })
+  dislikes: Types.ObjectId[];
 
   @Prop({ default: [] })
   replies: Types.ObjectId[];
@@ -39,13 +45,16 @@ export class Comment extends Document<Types.ObjectId> {
   @Prop({ default: [] })
   attachments: Types.ObjectId[];
 
-  @Prop({ index: true })
-  parent?: Types.ObjectId;
-
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
 
   @Prop({ default: () => new Date(), index: true })
   updatedAt: Date;
+
+  @Prop({ index: true })
+  parent?: Types.ObjectId;
+
+  @Prop({})
+  guest?: string;
 }
 export const CommentSchema = SchemaFactory.createForClass(Comment);

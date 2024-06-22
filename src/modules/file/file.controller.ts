@@ -2,28 +2,33 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  Logger,
+  NotFoundException,
+  Param,
   Post,
   UseGuards
 } from '@nestjs/common';
 import { FormDataRequest } from 'nestjs-form-data';
 import { AuthGuard } from '../auth/auth.guard';
-import { UploadFileBodyDto } from './file.dto';
+import { FileIdParam, UploadFileBodyDto } from './file.dto';
 import { FileService } from './file.service';
 import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import { IFile } from './file.interface';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Types } from 'mongoose';
 
 @ApiTags('files')
 @ApiBearerAuth()
 @Controller('files')
 export class FileController {
+  private logger = new Logger(FileController.name);
   constructor(private fileService: FileService) {}
 
-  @ApiResponse({})
   @Throttle({
-    upload: {
+    default: {
       ttl: 60000,
       limit: 5
     }
@@ -53,5 +58,24 @@ export class FileController {
       );
     }
     throw new BadRequestException();
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':id')
+  async delete(
+    @Param() param: FileIdParam,
+    @UserDecorator() user: UserDocument
+  ) {
+    const id = new Types.ObjectId(param.id);
+    const file = await this.fileService.get(id);
+
+    if (file.user.equals(user._id) === false) {
+      this.logger.verbose(`delete(${param.id}) ${file.user} != ${user._id}`);
+      throw new NotFoundException();
+    } else if (file.expiresIn.getTime() === 0) {
+      throw new BadRequestException();
+    }
+
+    await this.fileService.delete(id);
   }
 }

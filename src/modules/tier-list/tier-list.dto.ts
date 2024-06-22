@@ -4,7 +4,6 @@ import {
   ArrayMinSize,
   IsEnum,
   IsHexColor,
-  IsObject,
   IsOptional,
   IsString,
   Length,

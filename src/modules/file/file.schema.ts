@@ -34,7 +34,7 @@ export class File extends Document<Types.ObjectId> {
     },
     index: true
   })
-  expiredAt: Date;
+  expiresIn: Date;
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);

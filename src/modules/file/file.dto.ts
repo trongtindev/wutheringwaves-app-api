@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ValidateIf, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import {
+  ValidateIf,
+  ArrayMinSize,
+  ArrayMaxSize,
+  IsMongoId
+} from 'class-validator';
 import {
   IsFile,
   MinFileSize,
@@ -28,4 +33,9 @@ export class UploadFileBodyDto {
   })
   @ValidateIf((object, value) => typeof value !== 'undefined')
   files?: MemoryStoredFile[];
+}
+
+export class FileIdParam {
+  @IsMongoId()
+  id: string;
 }
