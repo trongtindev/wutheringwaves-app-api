@@ -5,8 +5,8 @@
   "version": "1.0.0",
   "description": "Nest TypeScript starter repository",
   "scripts": {
-    "start:dev": "set NODE_ENV=development && nest start --watch",
-    "start:debug": "set NODE_ENV=development && nest start --debug --watch",
+    "start:dev": "cross-env NODE_ENV=development nest start --watch",
+    "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "node dist/main",
     "build": "nest build",
     "git:production": "git checkout production && git merge main && git push && git checkout main",
@@ -66,6 +66,7 @@
     "cache-manager-redis-yet": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "firebase-admin": "^12.1.1",
