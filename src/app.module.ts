@@ -23,7 +23,6 @@ import { FileModule } from './modules/file/file.module';
 import { MapModule } from './modules/map/map.module';
 
 // environment
-process.env.NODE_ENV = process.env.NODE_ENV.split(' ')[0] as any;
 dotenv.config({ path: '.env.production' });
 if (process.env.NODE_ENV === 'development') {
   dotenv.config({ path: '.env.development', override: true });

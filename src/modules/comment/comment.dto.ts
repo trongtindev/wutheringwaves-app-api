@@ -13,7 +13,9 @@ import striptags from 'striptags';
 
 export class ListCommentQueryDto extends QueryDto {
   @ApiProperty({ description: '...' })
-  @IsUrl()
+  @IsUrl({
+    host_whitelist: ['localhost:8080', 'wutheringwaves.app']
+  })
   @ValidateIf(() => process.env.NODE_ENV === 'production')
   channel: string;
 }
@@ -26,7 +28,9 @@ export class CommentParamDto {
 
 export class CreateCommentBodyDto {
   @ApiProperty({ description: '...' })
-  @IsUrl()
+  @IsUrl({
+    host_whitelist: ['localhost:8080', 'wutheringwaves.app']
+  })
   @ValidateIf(() => process.env.NODE_ENV === 'production')
   channel: string;
 
