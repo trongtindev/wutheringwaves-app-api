@@ -21,6 +21,8 @@ import { BullModule } from '@nestjs/bull';
 import { CommentModule } from './modules/comment/comment.module';
 import { FileModule } from './modules/file/file.module';
 import { MapModule } from './modules/map/map.module';
+import { PostModule } from './modules/post/post.module';
+import { GuideModule } from './modules/guide/guide.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -112,7 +114,9 @@ if (admin.apps.length === 0) {
     UserModule,
     CommentModule,
     FileModule,
-    MapModule
+    MapModule,
+    PostModule,
+    GuideModule
   ],
   providers: [
     {

@@ -23,4 +23,4 @@ import { PostSchedule } from './post.schedule';
   providers: [PostService, PostEvents, PostSchedule],
   exports: [PostService]
 })
-export class ExampleModule {}
+export class PostModule {}
