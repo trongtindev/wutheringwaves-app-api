@@ -261,13 +261,11 @@ export class FileService implements OnApplicationBootstrap {
     const worker = new Bottleneck({ maxConcurrent: 10 });
 
     this.logger.verbose(`cleanup(${items.length})`);
-    await worker.schedule(() => {
-      return Promise.all(
-        items.map(async (e) => {
-          await this.delete(e._id);
-        })
-      );
-    });
+    await Promise.all(
+      items.map((e) => {
+        return worker.schedule(() => this.delete(e._id));
+      })
+    );
   }
 
   async setExpire(id: Types.ObjectId, expiresIn?: Date | number) {
