@@ -17,7 +17,7 @@ RUN npm rebuild --verbose sharp
 FROM node:18
 ENV CI=1
 ENV NODE_ENV production
-ENV TZ=Asia/Ho_Chi_Minh
+ENV TZ=Asia/Shanghai
 WORKDIR /home
 
 # setup packages
