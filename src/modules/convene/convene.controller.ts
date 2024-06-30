@@ -19,7 +19,6 @@ export class ConveneController {
   ) {
     return await this.conveneService.import(body.url, {
       userAgent: body.userAgent,
-      cardPoolType: body.cardPoolType,
       auth
     });
   }

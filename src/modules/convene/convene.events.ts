@@ -9,10 +9,5 @@ export class ConveneEvents {
   constructor(private conveneService: ConveneService) {}
 
   @OnEvent(ConveneEventType.afterImport)
-  async addChunk(args: IAfterImportConveneEventArgs) {
-    await this.conveneService.createChunk(args.playerId, {
-      items: args.items,
-      cardPoolType: args.cardPoolType
-    });
-  }
+  async addChunk(args: IAfterImportConveneEventArgs) {}
 }

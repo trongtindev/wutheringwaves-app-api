@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthData } from '../auth/auth.interface';
-import { Md5 } from 'ts-md5';
-import { Convene, ConveneChunk } from './convene.schema';
+import { ConveneStore } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ProxyService } from '../proxy/proxy.service';
@@ -11,6 +15,7 @@ import {
   IAfterImportConveneEventArgs,
   IConveneHistory
 } from './convene.interface';
+import Bottleneck from 'bottleneck';
 
 @Injectable()
 export class ConveneService {
@@ -18,9 +23,8 @@ export class ConveneService {
 
   constructor(
     private eventEmitter: EventEmitter2,
-    @InjectModel(Convene.name) private conveneModel: Model<Convene>,
-    @InjectModel(ConveneChunk.name)
-    private conveneChunkModel: Model<ConveneChunk>,
+    @InjectModel(ConveneStore.name)
+    private conveneStoreModel: Model<ConveneStore>,
     private proxyService: ProxyService
   ) {}
 
@@ -31,7 +35,6 @@ export class ConveneService {
     url: string,
     args: {
       userAgent: string;
-      cardPoolType: number;
       auth?: AuthData;
     }
   ) {
@@ -48,75 +51,115 @@ export class ConveneService {
     if (!resources_id) throw new BadRequestException('resources_id not found');
     if (!record_id) throw new BadRequestException('record_id not found');
 
-    // send request
-    const request = await this.proxyService.useWorker(
-      'https://gmserver-api.aki-game2.net/gacha/record/query',
+    const worker = new Bottleneck({ maxConcurrent: 3 });
+    const handle = async (cardPoolType: number) => {
+      const response = await this.proxyService.useWorker(
+        'https://gmserver-api.aki-game2.net/gacha/record/query',
+        {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+            Origin: 'https://aki-gm-resources-oversea.aki-game.net',
+            Priority: 'u=1, i',
+            Referer: 'https://aki-gm-resources-oversea.aki-game.net/',
+            'User-Agent': args.userAgent
+          },
+          body: {
+            cardPoolId: resources_id,
+            cardPoolType,
+            languageCode: lang,
+            playerId: player_id,
+            recordId: record_id,
+            serverId: svr_id
+          }
+        }
+      );
+
+      return JSON.parse(response.data.text).data.map((e) => {
+        if (!e.time) throw new BadGatewayException('missing field time');
+        if (!e.name) throw new BadGatewayException('missing field name');
+        if (!e.qualityLevel)
+          throw new BadGatewayException('missing field qualityLevel');
+
+        return {
+          time: e.time,
+          name: e.name,
+          qualityLevel: e.qualityLevel
+        };
+      }) as IConveneHistory[];
+    };
+    const chunks = await Promise.all(
+      Array.from(Array(7).keys()).map((cardPoolType) => {
+        return worker.schedule(() => {
+          return handle(cardPoolType + 1);
+        });
+      })
+    );
+
+    // store
+    await this.conveneStoreModel.updateOne(
+      { playerId: parseInt(player_id) },
       {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          Origin: 'https://aki-gm-resources-oversea.aki-game.net',
-          Priority: 'u=1, i',
-          Referer: 'https://aki-gm-resources-oversea.aki-game.net/',
-          'User-Agent': args.userAgent
-        },
-        body: {
-          cardPoolId: resources_id,
-          cardPoolType: args.cardPoolType,
-          languageCode: lang,
-          playerId: player_id,
-          recordId: record_id,
-          serverId: svr_id
+        $set: {
+          updatedAt: new Date()
+        }
+      },
+      {
+        upsert: true
+      }
+    );
+    const store = await this.conveneStoreModel.findOne({
+      playerId: parseInt(player_id)
+    });
+
+    // merge
+    const items: IConveneHistory[][] = Array.from(Array(7).keys()).map(
+      () => []
+    );
+    for (let i = 0; i < 7; i += 1) {
+      let mergeEnd = 0;
+
+      for (let j = 0; j < chunks[i].length; j += 1) {
+        if (store.items.length - 1 < i) {
+          mergeEnd = chunks[i].length;
+          break;
+        } else {
+          let skip = false;
+          for (let k = 0; k < store.items[i].length; k += 1) {
+            if (
+              chunks[i][j].time === store.items[i][k].time &&
+              chunks[i][j].name === store.items[i][k].name
+            ) {
+              skip = true;
+              break;
+            }
+          }
+          if (skip) break;
+        }
+
+        mergeEnd += 1;
+      }
+
+      items[i] = [
+        ...chunks[i].slice(0, mergeEnd),
+        ...(store.items.length - 1 >= i ? store.items[i] : [])
+      ];
+    }
+
+    // update
+    await this.conveneStoreModel.updateOne(
+      { playerId: parseInt(player_id) },
+      {
+        $set: {
+          items
         }
       }
     );
 
-    // check response
-    const response: {
-      data?: IConveneHistory[];
-      message?: string;
-    } = JSON.parse(request.data.text);
-    if (response.message !== 'success') {
-      throw new BadRequestException('invalid response');
-    } else if (!response.data) {
-      throw new BadRequestException('invalid response data');
-    }
-
-    // check missing fields
-    const isMissingFields = response.data.findIndex(
-      (e) =>
-        !e.name ||
-        !e.qualityLevel ||
-        !e.resourceId ||
-        !e.resourceType ||
-        !e.time
-    );
-    if (isMissingFields > 0) {
-      throw new BadRequestException('some field missing');
-    }
-
-    const items = response.data
-      .sort((a, b) => {
-        return new Date(a.time).getTime() - new Date(b.time).getTime();
-      })
-      .map((e, i) => {
-        const sign = Object.keys(e).map((key) => (e as any)[key]);
-        const key = Md5.hashStr(
-          i + sign.join('|') + player_id + args.cardPoolType
-        );
-
-        return {
-          ...e,
-          cardPoolType: args.cardPoolType,
-          key
-        };
-      });
-
     // emit event
     const eventArgs: IAfterImportConveneEventArgs = {
       playerId: parseInt(player_id),
-      items,
-      cardPoolType: args.cardPoolType
+      items
     };
     await this.eventEmitter.emitAsync(
       ConveneEventType.afterImportAsync,
@@ -125,26 +168,10 @@ export class ConveneService {
     this.eventEmitter.emit(ConveneEventType.afterImport, eventArgs);
 
     return {
-      total: items.length,
-      items
+      playerId: parseInt(player_id),
+      items,
+      total: Object.keys(items).reduce((prev, e) => items[e].length + prev, 0)
     };
-  }
-
-  /**
-   *
-   */
-  async createChunk(
-    playerId: number,
-    args: {
-      items: IConveneHistory[];
-      cardPoolType: number;
-    }
-  ) {
-    return await this.conveneChunkModel.create({
-      playerId,
-      items: args.items,
-      cardPoolType: args.cardPoolType
-    });
   }
 
   /**

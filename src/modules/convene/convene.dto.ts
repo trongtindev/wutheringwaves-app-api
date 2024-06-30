@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsUrl } from 'class-validator';
+import { IsString, IsUrl } from 'class-validator';
 
 export class ImportConveneBodyDto {
   @ApiProperty({ description: '...' })
@@ -9,8 +9,4 @@ export class ImportConveneBodyDto {
   @ApiProperty({ description: '...' })
   @IsString()
   userAgent: string;
-
-  @ApiProperty({ description: '...' })
-  @IsNumber()
-  cardPoolType: number;
 }
