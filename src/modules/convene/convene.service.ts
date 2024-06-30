@@ -80,10 +80,13 @@ export class ConveneService {
         if (!e.name) throw new BadGatewayException('missing field name');
         if (!e.qualityLevel)
           throw new BadGatewayException('missing field qualityLevel');
+        if (!e.resourceType)
+          throw new BadGatewayException('missing field resourceType');
 
         return {
           time: e.time,
           name: e.name,
+          resourceType: e.resourceType,
           qualityLevel: e.qualityLevel
         };
       }) as IConveneHistory[];
@@ -169,7 +172,16 @@ export class ConveneService {
 
     return {
       playerId: parseInt(player_id),
-      items,
+      items: Object.keys(items)
+        .map((key) => {
+          return items[key].map((e) => {
+            return {
+              ...e,
+              cardPoolType: parseInt(key) + 1
+            };
+          });
+        })
+        .flatMap((e) => e),
       total: Object.keys(items).reduce((prev, e) => items[e].length + prev, 0)
     };
   }
