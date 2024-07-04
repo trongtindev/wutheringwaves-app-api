@@ -8,12 +8,10 @@ import {
 } from './comment.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserDocument } from '../user/user.schema';
 import { IAfterCreateCommentEventArgs, IComment } from './comment.interface';
 import { CommentEventType } from './comment.types';
 import { FileService } from '../file/file.service';
 import { UserService } from '../user/user.service';
-import { IFile } from '../file/file.interface';
 
 @Injectable()
 export class CommentService {
@@ -29,13 +27,7 @@ export class CommentService {
   ) {}
 
   async resolve(document: CommentDocument): Promise<IComment> {
-    const user = await (async () => {
-      if (document.guest) {
-        return document.guest;
-      }
-      const user = await this.userService.get(document.user);
-      return await this.userService.resolve(user);
-    })();
+    const user = await this.userService.get(document.user);
     const attachments = await Promise.all(
       document.attachments.map(async (e) => {
         const file = await this.fileService.findById(e);
@@ -45,7 +37,7 @@ export class CommentService {
 
     return {
       id: document.id,
-      user,
+      user: await this.userService.resolve(user),
       content: document.content.replaceAll('\n', '<br/>'),
       likes: document.likes.length,
       dislikes: document.dislikes.length,
