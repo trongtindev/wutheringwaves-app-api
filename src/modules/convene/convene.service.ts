@@ -38,6 +38,8 @@ export class ConveneService {
       auth?: AuthData;
     }
   ) {
+    this.logger.verbose(`import(${url})`);
+
     const uri = new URL(url.replaceAll('index.html#', 'index.html'));
     const lang = uri.searchParams.get('lang');
     const svr_id = uri.searchParams.get('svr_id');
