@@ -2,13 +2,14 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
-  Logger
+  Logger,
+  OnApplicationBootstrap
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthData } from '../auth/auth.interface';
-import { ConveneStore } from './convene.schema';
+import { ConveneStore, ConveneSummary } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ProxyService } from '../proxy/proxy.service';
 import { ConveneEventType } from './convene.types';
 import {
@@ -16,17 +17,48 @@ import {
   IConveneHistory
 } from './convene.interface';
 import Bottleneck from 'bottleneck';
+import axios from 'axios';
+import dayjs from 'dayjs';
 
 @Injectable()
-export class ConveneService {
+export class ConveneService implements OnApplicationBootstrap {
   private logger = new Logger(ConveneService.name);
+  private weapons: {
+    id: number;
+    name: string;
+  }[];
+  private characters: {
+    id: number;
+    name: string;
+  }[];
 
   constructor(
     private eventEmitter: EventEmitter2,
     @InjectModel(ConveneStore.name)
     private conveneStoreModel: Model<ConveneStore>,
+    @InjectModel(ConveneSummary.name)
+    private conveneSummaryModel: Model<ConveneSummary>,
     private proxyService: ProxyService
   ) {}
+
+  async onApplicationBootstrap() {
+    // load weapons
+    const weapons = await axios.get('/api/getWeapons', {
+      baseURL: process.env.SITE_URL
+    });
+    this.weapons = weapons.data;
+
+    // load characters
+    const characters = await axios.get('/api/getCharacters', {
+      baseURL: process.env.SITE_URL
+    });
+    this.characters = characters.data;
+
+    // start global calculate
+    if (process.env.NODE_ENV === 'development') {
+      this.globalStatsCalculate();
+    }
+  }
 
   /**
    *
@@ -77,19 +109,48 @@ export class ConveneService {
         }
       );
 
-      return JSON.parse(response.data.text).data.map((e) => {
-        if (!e.time) throw new BadGatewayException('missing field time');
-        if (!e.name) throw new BadGatewayException('missing field name');
-        if (!e.qualityLevel)
+      const data: IConveneHistory[] = JSON.parse(response.data.text).data;
+      return data.map((convene) => {
+        if (!convene.time) throw new BadGatewayException('missing field time');
+        if (!convene.name) throw new BadGatewayException('missing field name');
+        if (!convene.qualityLevel) {
           throw new BadGatewayException('missing field qualityLevel');
-        if (!e.resourceType)
+        }
+        if (!convene.resourceId) {
+          throw new BadGatewayException('missing field resourceId');
+        }
+        if (!convene.resourceType) {
           throw new BadGatewayException('missing field resourceType');
+        }
+
+        const [name, resourceType] = (() => {
+          const character = this.characters.find(
+            (e) => e.id === convene.resourceId
+          );
+          if (character) {
+            return [character.name, 'Resonator'];
+          }
+
+          const weapon = this.weapons.find((e) => e.id === convene.resourceId);
+          if (weapon) {
+            return [weapon.name, 'Weapon'];
+          }
+
+          return [null, null];
+        })();
+
+        if (!name || !resourceType) {
+          this.logger.warn(
+            `import() not found ${convene.resourceId} in ${convene.resourceType}`
+          );
+        }
 
         return {
-          time: e.time,
-          name: e.name,
-          resourceType: e.resourceType,
-          qualityLevel: e.qualityLevel
+          name: name || convene.name,
+          time: convene.time,
+          resourceId: convene.resourceId,
+          resourceType: resourceType || convene.resourceType,
+          qualityLevel: convene.qualityLevel
         };
       }) as IConveneHistory[];
     };
@@ -133,7 +194,7 @@ export class ConveneService {
           for (let k = 0; k < store.items[i].length; k += 1) {
             if (
               chunks[i][j].time === store.items[i][k].time &&
-              chunks[i][j].name === store.items[i][k].name
+              chunks[i][j].resourceId === store.items[i][k].resourceId
             ) {
               skip = true;
               break;
@@ -176,9 +237,9 @@ export class ConveneService {
       playerId: parseInt(player_id),
       items: Object.keys(items)
         .map((key) => {
-          return items[key].map((e) => {
+          return items[key].map((convene: IConveneHistory) => {
             return {
-              ...e,
+              ...convene,
               cardPoolType: parseInt(key) + 1
             };
           });
@@ -188,8 +249,183 @@ export class ConveneService {
     };
   }
 
-  /**
-   *
-   */
-  async globalStatsCalculate() {}
+  async globalStatsCalculate(storeIds?: Types.ObjectId[]) {
+    this.logger.verbose('globalStatsCalculate get stores');
+    const stores = await this.conveneStoreModel.find();
+
+    this.logger.verbose('globalStatsCalculate get banners');
+    const banners = await axios.get<
+      {
+        type: number;
+        name: string;
+        time?: {
+          start: string;
+          end: string;
+        };
+        featuredRare?: string;
+        featured?: string[];
+      }[]
+    >('/api/getBanners', {
+      baseURL: process.env.SITE_URL
+    });
+    const summaryData: {
+      [key: string]: {
+        totalPull: number;
+        totalUsers: number[];
+        pullByDay: { [key: string]: number };
+        fiveStarList: {
+          [key: string]: {
+            total: number;
+            resourceType: string;
+          };
+        };
+        fourStarList: {
+          [key: string]: {
+            total: number;
+            resourceType: string;
+          };
+        };
+      };
+    } = {};
+
+    this.logger.verbose('globalStatsCalculate start summary');
+    for (const element of stores) {
+      for (let i = 0; i < element.items.length; i += 1) {
+        const cardPoolType = i + 1;
+        for (const convene of element.items[i]) {
+          const matchBanner = banners.data.find((banner) => {
+            if (banner.time) {
+              const conveneTime = dayjs(convene.time);
+              const timeStart = dayjs(banner.time.start);
+              const timeEnd = dayjs(banner.time.end);
+              return conveneTime >= timeStart && conveneTime <= timeEnd;
+            }
+
+            return banner.type === cardPoolType;
+          });
+
+          if (!matchBanner) {
+            this.logger.verbose(
+              `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`
+            );
+            continue;
+          }
+
+          summaryData[matchBanner.name] ??= {
+            totalPull: 0,
+            totalUsers: [],
+            pullByDay: {},
+            fiveStarList: {},
+            fourStarList: {}
+          };
+
+          // totalPull
+          summaryData[matchBanner.name].totalPull += 1;
+
+          // pullByDay
+          const date = convene.time.split(' ')[0];
+          summaryData[matchBanner.name].pullByDay[date] ??= 0;
+          summaryData[matchBanner.name].pullByDay[date] += 1;
+
+          // totalUsers
+          if (
+            !summaryData[matchBanner.name].totalUsers.includes(element.playerId)
+          ) {
+            summaryData[matchBanner.name].totalUsers.push(element.playerId);
+          }
+
+          if (convene.qualityLevel === 5) {
+            // fiveStarList
+            summaryData[matchBanner.name].fiveStarList[convene.name] ??= {
+              total: 0,
+              resourceType: convene.resourceType
+            };
+            summaryData[matchBanner.name].fiveStarList[convene.name].total += 1;
+          } else if (convene.qualityLevel === 4) {
+            // fourStarList
+            summaryData[matchBanner.name].fourStarList[convene.name] ??= {
+              total: 0,
+              resourceType: convene.resourceType
+            };
+            summaryData[matchBanner.name].fourStarList[convene.name].total += 1;
+          }
+        }
+      }
+    }
+
+    await Promise.all(
+      Object.keys(summaryData).map(async (banner) => {
+        const summary = summaryData[banner];
+        const totalFiveStar = Object.keys(summary.fiveStarList).reduce(
+          (previous, e) => {
+            return summary.fiveStarList[e].total + previous;
+          },
+          0
+        );
+        const totalFourStar = Object.keys(summary.fourStarList).reduce(
+          (previous, e) => {
+            return summary.fourStarList[e].total + previous;
+          },
+          0
+        );
+
+        await this.conveneSummaryModel.updateOne(
+          {
+            banner
+          },
+          {
+            totalPull: summary.totalPull,
+            totalUsers: summary.totalUsers.length,
+            fiveStarList: Object.keys(summary.fiveStarList)
+              .map((key) => {
+                const percentage =
+                  (summary.fiveStarList[key].total / totalFiveStar) * 100;
+                return {
+                  item: key,
+                  total: summary.fiveStarList[key].total,
+                  resourceType: summary.fiveStarList[key].resourceType,
+                  percentage: parseFloat(percentage.toFixed(2))
+                };
+              })
+              .sort((a, b) => {
+                return b.total - a.total;
+              }),
+            fourStarList: Object.keys(summary.fourStarList)
+              .map((key) => {
+                const percentage =
+                  (summary.fourStarList[key].total / totalFourStar) * 100;
+                return {
+                  item: key,
+                  total: summary.fourStarList[key].total,
+                  percentage: parseFloat(percentage.toFixed(2)),
+                  resourceType: summary.fourStarList[key].resourceType
+                };
+              })
+              .sort((a, b) => {
+                return b.total - a.total;
+              }),
+            pullByDay: Object.keys(summary.pullByDay)
+              .map((e) => {
+                return {
+                  time: e,
+                  total: summary.pullByDay[e]
+                };
+              })
+              .sort((a, b) => {
+                return b.total - a.total;
+              }),
+            updatedAt: new Date()
+          },
+          {
+            upsert: true
+          }
+        );
+      })
+    );
+  }
+
+  async summary() {
+    const items = await this.conveneSummaryModel.find();
+    return { items };
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ConveneService } from './convene.service';
 import { AuthGuardNullable } from '../auth/auth.guard';
 import { AuthDecorator } from '../auth/auth.decorator';
@@ -21,5 +21,10 @@ export class ConveneController {
       userAgent: body.userAgent,
       auth
     });
+  }
+
+  @Get('summary')
+  async summary() {
+    return await this.conveneService.summary();
   }
 }

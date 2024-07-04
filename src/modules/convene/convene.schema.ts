@@ -37,10 +37,10 @@ export class ConveneSummary extends Document<Types.ObjectId> {
   pullByDay: { time: string; total: number }[];
 
   @Prop({ default: [] })
-  fiveStarList: { name: string; total: number }[];
+  fiveStarList: { item: string; total: number; percentage: number }[];
 
   @Prop({ default: [] })
-  fourStarList: { name: string; total: number }[];
+  fourStarList: { item: string; total: number; percentage: number }[];
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;

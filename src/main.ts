@@ -5,8 +5,16 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
 import { AppGuard } from './app.guard';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 async function bootstrap() {
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+  dayjs.extend(relativeTime);
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger:
       process.env.NODE_ENV === 'development'

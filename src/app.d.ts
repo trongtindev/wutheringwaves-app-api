@@ -6,6 +6,7 @@ declare global {
       NODE_ENV: 'production' | 'development';
 
       readonly PORT: string;
+      readonly SITE_URL: string;
       readonly MASTER_TOKEN: string;
 
       readonly REDIS_PORT: string;

@@ -9,5 +9,5 @@ export class ConveneEvents {
   constructor(private conveneService: ConveneService) {}
 
   @OnEvent(ConveneEventType.afterImport)
-  async addChunk(args: IAfterImportConveneEventArgs) {}
+  async addToQueue(args: IAfterImportConveneEventArgs) {}
 }

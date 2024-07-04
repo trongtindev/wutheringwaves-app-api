@@ -8,13 +8,7 @@ export class ConveneSchedule {
 
   constructor(private conveneService: ConveneService) {}
 
-  @Cron('*/30 * * * * *')
-  async globalStatsCalculateDev() {
-    if (process.env.NODE_ENV !== 'development') return;
-    await this.globalStatsCalculate();
-  }
-
-  @Cron('*/15 * * * *')
+  @Cron('*/30 * * * *')
   async globalStatsCalculate() {
     this.logger.verbose('globalStatsCalculate');
     await this.conveneService.globalStatsCalculate();
