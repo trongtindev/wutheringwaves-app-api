@@ -23,6 +23,8 @@ import { FileModule } from './modules/file/file.module';
 import { MapModule } from './modules/map/map.module';
 import { PostModule } from './modules/post/post.module';
 import { GuideModule } from './modules/guide/guide.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -70,6 +72,12 @@ if (admin.apps.length === 0) {
 @Module({
   imports: [
     // core modules
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveStaticOptions: {
+        index: false
+      }
+    }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRoot(

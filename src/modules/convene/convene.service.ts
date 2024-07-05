@@ -18,6 +18,7 @@ import {
 } from './convene.interface';
 import Bottleneck from 'bottleneck';
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -46,22 +47,21 @@ export class ConveneService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    // load weapons
-    const weapons = await axios.get('/api/getWeapons', {
+    const api = axios.create({
       baseURL: process.env.SITE_URL
     });
+    axiosRetry(api);
+
+    // load weapons
+    const weapons = await api.get('/api/getWeapons');
     this.weapons = weapons.data;
 
     // load characters
-    const characters = await axios.get('/api/getCharacters', {
-      baseURL: process.env.SITE_URL
-    });
+    const characters = await api.get('/api/getCharacters');
     this.characters = characters.data;
 
     // load timeOffset
-    const timeOffset = await axios.get('/api/getTimeOffset', {
-      baseURL: process.env.SITE_URL
-    });
+    const timeOffset = await api.get('/api/getTimeOffset');
     this.timeOffset = timeOffset.data;
 
     // start global calculate
@@ -313,7 +313,7 @@ export class ConveneService implements OnApplicationBootstrap {
       };
     } = {};
 
-    this.logger.verbose('globalStatsCalculate start summary', process.env.TZ);
+    this.logger.verbose('globalStatsCalculate start summary');
     for (const element of stores) {
       const rcData: { [key: string]: number } = {};
       const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];

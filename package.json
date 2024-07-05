@@ -54,6 +54,7 @@
     "@nestjs/mongoose": "^10.0.4",
     "@nestjs/platform-express": "^10.3.6",
     "@nestjs/schedule": "^4.0.1",
+    "@nestjs/serve-static": "^4.0.2",
     "@nestjs/swagger": "^7.3.1",
     "@nestjs/throttler": "^5.1.2",
     "@paralleldrive/cuid2": "github:paralleldrive/cuid2",
