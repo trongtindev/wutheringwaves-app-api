@@ -10,14 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version:
-          - 18.x
-        redis-version: [5]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
 
       # - uses: vitr/actions-build-and-upload-to-ecs@master
       #   with:

@@ -8,8 +8,11 @@ RUN npm i -g pnpm
 
 # build application
 COPY . .
-RUN pnpm install
+RUN pnpm install --prefer-offline
 RUN pnpm run build
+
+RUN rm -rf node_modules
+RUN pnpm install --prod --ignore-scripts --prefer-offline --frozen-lockfile
 RUN npm rebuild --verbose sharp
 
 

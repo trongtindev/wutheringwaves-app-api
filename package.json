@@ -1,5 +1,5 @@
 {
-  "name": "wutheringwaves.app-api",
+  "name": "@trongtindev/astrite-app-api",
   "main": "dist/main.js",
   "private": true,
   "version": "1.0.0",
