@@ -8,5 +8,6 @@ export interface IConveneHistory {
 
 export interface IAfterImportConveneEventArgs {
   playerId: number;
+  serverId: string;
   items: IConveneHistory[][];
 }

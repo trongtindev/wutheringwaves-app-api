@@ -31,6 +31,10 @@ export class ConveneService implements OnApplicationBootstrap {
     id: number;
     name: string;
   }[];
+  private timeOffset: {
+    timeOffset: { [key: string]: number };
+    timeOffsetIds: { [key: string]: number };
+  };
 
   constructor(
     private eventEmitter: EventEmitter2,
@@ -54,6 +58,12 @@ export class ConveneService implements OnApplicationBootstrap {
     });
     this.characters = characters.data;
 
+    // load timeOffset
+    const timeOffset = await axios.get('/api/getTimeOffset', {
+      baseURL: process.env.SITE_URL
+    });
+    this.timeOffset = timeOffset.data;
+
     // start global calculate
     if (process.env.NODE_ENV === 'development') {
       this.globalStatsCalculate();
@@ -68,6 +78,7 @@ export class ConveneService implements OnApplicationBootstrap {
     args: {
       userAgent: string;
       auth?: AuthData;
+      skipMerge?: boolean;
     }
   ) {
     this.logger.verbose(`import(${url})`);
@@ -206,10 +217,14 @@ export class ConveneService implements OnApplicationBootstrap {
         mergeEnd += 1;
       }
 
-      items[i] = [
-        ...chunks[i].slice(0, mergeEnd),
-        ...(store.items.length - 1 >= i ? store.items[i] : [])
-      ];
+      if (args.skipMerge) {
+        items[i] = chunks[i];
+      } else {
+        items[i] = [
+          ...chunks[i].slice(0, mergeEnd),
+          ...(store.items.length - 1 >= i ? store.items[i] : [])
+        ];
+      }
     }
 
     // update
@@ -217,6 +232,7 @@ export class ConveneService implements OnApplicationBootstrap {
       { playerId: parseInt(player_id) },
       {
         $set: {
+          serverId: svr_id,
           items
         }
       }
@@ -225,6 +241,7 @@ export class ConveneService implements OnApplicationBootstrap {
     // emit event
     const eventArgs: IAfterImportConveneEventArgs = {
       playerId: parseInt(player_id),
+      serverId: svr_id,
       items
     };
     await this.eventEmitter.emitAsync(
@@ -235,6 +252,7 @@ export class ConveneService implements OnApplicationBootstrap {
 
     return {
       playerId: parseInt(player_id),
+      serverId: svr_id,
       items: Object.keys(items)
         .map((key) => {
           return items[key].map((convene: IConveneHistory) => {
@@ -270,6 +288,13 @@ export class ConveneService implements OnApplicationBootstrap {
     });
     const summaryData: {
       [key: string]: {
+        avgRc: {
+          [key: string]: number[];
+        };
+        avgPity: {
+          chance: number;
+          totalPull: number;
+        }[];
         totalPull: number;
         totalUsers: number[];
         pullByDay: { [key: string]: number };
@@ -288,32 +313,52 @@ export class ConveneService implements OnApplicationBootstrap {
       };
     } = {};
 
-    this.logger.verbose('globalStatsCalculate start summary');
+    this.logger.verbose('globalStatsCalculate start summary', process.env.TZ);
     for (const element of stores) {
+      const rcData: { [key: string]: number } = {};
+      const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];
+
       for (let i = 0; i < element.items.length; i += 1) {
         const cardPoolType = i + 1;
         for (const convene of element.items[i]) {
-          const matchBanner = banners.data.find((banner) => {
+          const matchBanners = banners.data.filter((banner) => {
             if (banner.time) {
-              const conveneTime = dayjs(convene.time);
-              const timeStart = dayjs(banner.time.start);
-              const timeEnd = dayjs(banner.time.end);
-              return conveneTime >= timeStart && conveneTime <= timeEnd;
-            }
+              const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
+              const timeStart = dayjs(banner.time.start)
+                .utcOffset(8)
+                .add(timeOffset - 8, 'hours');
+              const timeEnd = dayjs(banner.time.end)
+                .utcOffset(8)
+                .add(timeOffset - 8, 'hours');
 
+              const condition =
+                conveneTime >= timeStart &&
+                conveneTime <= timeEnd &&
+                banner.type === cardPoolType;
+
+              return condition;
+            }
             return banner.type === cardPoolType;
           });
 
-          if (!matchBanner) {
+          if (matchBanners.length === 0) {
             this.logger.verbose(
               `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`
             );
             continue;
           }
+          const matchBanner = matchBanners[matchBanners.length - 1];
 
           summaryData[matchBanner.name] ??= {
             totalPull: 0,
             totalUsers: [],
+            avgRc: {},
+            avgPity: Array.from(Array(90).keys()).map(() => {
+              return {
+                chance: 0,
+                totalPull: 0
+              };
+            }),
             pullByDay: {},
             fiveStarList: {},
             fourStarList: {}
@@ -334,7 +379,46 @@ export class ConveneService implements OnApplicationBootstrap {
             summaryData[matchBanner.name].totalUsers.push(element.playerId);
           }
 
+          // avgRc
+          if (convene.qualityLevel >= 4) {
+            summaryData[matchBanner.name].avgRc[convene.name] ??= Array.from(
+              Array(8).keys()
+            ).map(() => {
+              return 0;
+            });
+
+            const rcKey = `${matchBanner.name}.${convene.name}`;
+
+            if (typeof rcData[rcKey] === 'undefined') {
+              rcData[rcKey] = 0;
+            } else {
+              rcData[rcKey] += 1;
+
+              if (
+                rcData[rcKey] >=
+                summaryData[matchBanner.name].avgRc[convene.name].length
+              ) {
+                rcData[rcKey] =
+                  summaryData[matchBanner.name].avgRc[convene.name].length - 1;
+              }
+            }
+
+            const rcIndex = rcData[rcKey];
+            summaryData[matchBanner.name].avgRc[convene.name][rcIndex] += 1;
+          }
+
+          // avgPity
           if (convene.qualityLevel === 5) {
+            let pity = 1;
+            for (let j = i + 1; j < element.items[i].length; j += 1) {
+              if (element.items[i][j].qualityLevel >= 5) {
+                break;
+              } else {
+                pity += 1;
+              }
+            }
+            summaryData[matchBanner.name].avgPity[pity].totalPull += 1;
+
             // fiveStarList
             summaryData[matchBanner.name].fiveStarList[convene.name] ??= {
               total: 0,
@@ -376,6 +460,36 @@ export class ConveneService implements OnApplicationBootstrap {
           {
             totalPull: summary.totalPull,
             totalUsers: summary.totalUsers.length,
+            avgPity: summary.avgPity.map((e) => {
+              return {
+                chance:
+                  e.totalPull /
+                  (summary.avgPity.reduce(
+                    (prev, value) => value.totalPull + prev,
+                    0
+                  ) /
+                    summary.avgPity.length),
+                totalPull: e.totalPull
+              };
+            }),
+            avgRc: Object.keys(summary.avgRc)
+              .map((key) => {
+                return {
+                  item: key,
+                  stacks: summary.avgRc[key]
+                };
+              })
+              .sort((a, b) => {
+                const totalA = a.stacks.reduce(
+                  (prev, value) => value + prev,
+                  0
+                );
+                const totalB = b.stacks.reduce(
+                  (prev, value) => value + prev,
+                  0
+                );
+                return totalB - totalA;
+              }),
             fiveStarList: Object.keys(summary.fiveStarList)
               .map((key) => {
                 const percentage =

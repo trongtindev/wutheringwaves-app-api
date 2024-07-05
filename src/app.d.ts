@@ -3,8 +3,8 @@ declare global {
   namespace NodeJS {
     // eslint-disable-next-line no-unused-vars
     interface ProcessEnv {
-      NODE_ENV: 'production' | 'development';
-
+      readonly NODE_ENV: 'production' | 'development';
+      readonly TZ: string;
       readonly PORT: string;
       readonly SITE_URL: string;
       readonly MASTER_TOKEN: string;

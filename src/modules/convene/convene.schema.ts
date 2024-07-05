@@ -12,6 +12,9 @@ export class ConveneStore extends Document<Types.ObjectId> {
   @Prop({ required: true })
   items: IConveneHistory[][];
 
+  @Prop({ default: '86d52186155b148b5c138ceb41be9650' })
+  serverId: string;
+
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
 
@@ -32,6 +35,18 @@ export class ConveneSummary extends Document<Types.ObjectId> {
 
   @Prop({ default: 0 })
   totalUsers: number;
+
+  @Prop()
+  avgPity: {
+    chance: number;
+    totalPull: number;
+  }[];
+
+  @Prop()
+  avgRc: {
+    item: number;
+    stacks: number[];
+  }[];
 
   @Prop({ default: [] })
   pullByDay: { time: string; total: number }[];

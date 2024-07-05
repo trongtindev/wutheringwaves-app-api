@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class ImportConveneBodyDto {
   @ApiProperty({ description: '...' })
@@ -9,4 +9,9 @@ export class ImportConveneBodyDto {
   @ApiProperty({ description: '...' })
   @IsString()
   userAgent: string;
+
+  @ApiProperty({ description: '...' })
+  @IsBoolean()
+  @IsOptional()
+  skipMerge?: boolean;
 }

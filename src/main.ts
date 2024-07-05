@@ -14,6 +14,7 @@ async function bootstrap() {
   dayjs.extend(utc);
   dayjs.extend(timezone);
   dayjs.extend(relativeTime);
+  dayjs.tz.setDefault(process.env.TZ);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger:
