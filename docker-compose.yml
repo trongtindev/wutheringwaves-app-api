@@ -1,6 +1,7 @@
 services:
   api:
-    build: ./
+    # build: ./
+    image: ghcr.io/trongtindev/astrite-app-api:latest
     restart: unless-stopped
     volumes:
       - ./tmp:/home/tmp
