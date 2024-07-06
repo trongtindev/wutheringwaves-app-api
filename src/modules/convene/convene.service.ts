@@ -268,10 +268,7 @@ export class ConveneService implements OnApplicationBootstrap {
   }
 
   async globalStatsCalculate(storeIds?: Types.ObjectId[]) {
-    this.logger.verbose('globalStatsCalculate get stores');
     const stores = await this.conveneStoreModel.find();
-
-    this.logger.verbose('globalStatsCalculate get banners');
     const banners = await axios.get<
       {
         type: number;
@@ -297,6 +294,7 @@ export class ConveneService implements OnApplicationBootstrap {
         }[];
         totalPull: number;
         totalUsers: number[];
+        winRateOff: { [key: string]: number[] };
         pullByDay: { [key: string]: number };
         fiveStarList: {
           [key: string]: {
@@ -304,23 +302,42 @@ export class ConveneService implements OnApplicationBootstrap {
             resourceType: string;
           };
         };
+        fiveStarWinRate: { [key: string]: number };
         fourStarList: {
           [key: string]: {
             total: number;
             resourceType: string;
           };
         };
+        fourStarWinRate: { [key: string]: number };
       };
     } = {};
 
-    this.logger.verbose('globalStatsCalculate start summary');
     for (const element of stores) {
       const rcData: { [key: string]: number } = {};
       const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];
+      const totalFiveStar: { [key: string]: number } = {};
+      const totalFourStar: { [key: string]: number } = {};
+      const totalFiveStarWin: { [key: string]: number } = {};
+      const totalFourStarWin: { [key: string]: number } = {};
+      const totalWinRateOff: { [key: string]: number[] } = {};
 
       for (let i = 0; i < element.items.length; i += 1) {
         const cardPoolType = i + 1;
+
         for (const convene of element.items[i]) {
+          const conveneName = (() => {
+            const character = this.characters.find(
+              (e) => e.id === convene.resourceId
+            );
+            if (character) return character.name;
+            const weapon = this.weapons.find(
+              (e) => e.id === convene.resourceId
+            );
+            if (weapon) return weapon.name;
+            return convene.name;
+          })();
+
           const matchBanners = banners.data.filter((banner) => {
             if (banner.time) {
               const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
@@ -352,6 +369,7 @@ export class ConveneService implements OnApplicationBootstrap {
           summaryData[matchBanner.name] ??= {
             totalPull: 0,
             totalUsers: [],
+            winRateOff: {},
             avgRc: {},
             avgPity: Array.from(Array(90).keys()).map(() => {
               return {
@@ -361,8 +379,13 @@ export class ConveneService implements OnApplicationBootstrap {
             }),
             pullByDay: {},
             fiveStarList: {},
-            fourStarList: {}
+            fiveStarWinRate: {},
+            fourStarList: {},
+            fourStarWinRate: {}
           };
+
+          // winRateOff
+          totalWinRateOff[matchBanner.name] ??= [0, 0];
 
           // totalPull
           summaryData[matchBanner.name].totalPull += 1;
@@ -425,6 +448,20 @@ export class ConveneService implements OnApplicationBootstrap {
               resourceType: convene.resourceType
             };
             summaryData[matchBanner.name].fiveStarList[convene.name].total += 1;
+
+            // fiveStarWinRateOff
+            if (matchBanner.featuredRare) {
+              totalFiveStar[matchBanner.name] ??= 0;
+              totalFiveStarWin[matchBanner.name] ??= 0;
+
+              totalFiveStar[matchBanner.name] += 1;
+              if (matchBanner.featuredRare === conveneName) {
+                totalFiveStarWin[matchBanner.name] += 1;
+                totalWinRateOff[matchBanner.name][0] += 1;
+              } else {
+                totalWinRateOff[matchBanner.name][1] += 1;
+              }
+            }
           } else if (convene.qualityLevel === 4) {
             // fourStarList
             summaryData[matchBanner.name].fourStarList[convene.name] ??= {
@@ -432,9 +469,37 @@ export class ConveneService implements OnApplicationBootstrap {
               resourceType: convene.resourceType
             };
             summaryData[matchBanner.name].fourStarList[convene.name].total += 1;
+
+            // fourStarWinRateOff
+            if (matchBanner.featured) {
+              totalFourStar[matchBanner.name] ??= 1;
+              totalFourStarWin[matchBanner.name] ??= 0;
+
+              totalFourStar[matchBanner.name] += 1;
+              if (matchBanner.featured.includes(conveneName)) {
+                totalFourStarWin[matchBanner.name] += 1;
+                totalWinRateOff[matchBanner.name][0] += 1;
+              } else {
+                totalWinRateOff[matchBanner.name][1] += 1;
+              }
+            }
           }
         }
       }
+
+      Object.keys(totalFiveStar).map((banner) => {
+        const total = totalFiveStar[banner];
+        const rate = totalFiveStarWin[banner] / total;
+        summaryData[banner].fiveStarWinRate[rate] ??= 0;
+        summaryData[banner].fiveStarWinRate[rate] += 1;
+      });
+
+      Object.keys(totalFourStar).map((banner) => {
+        const total = totalFourStar[banner];
+        const rate = totalFourStarWin[banner] / total;
+        summaryData[banner].fourStarWinRate[rate] ??= 0;
+        summaryData[banner].fourStarWinRate[rate] += 1;
+      });
     }
 
     await Promise.all(
@@ -460,6 +525,12 @@ export class ConveneService implements OnApplicationBootstrap {
           {
             totalPull: summary.totalPull,
             totalUsers: summary.totalUsers.length,
+            // winRateOff: Object.keys(summary.winRateOff).map((e) => {
+            //   const win = summary.winRateOff[e][0]
+            //   const lose = summary.winRateOff[e][1]
+            //   const rate =
+            //   return [parseFloat(e), summary.winRateOff[e]];
+            // }),
             avgPity: summary.avgPity.map((e) => {
               return {
                 chance:
@@ -504,6 +575,9 @@ export class ConveneService implements OnApplicationBootstrap {
               .sort((a, b) => {
                 return b.total - a.total;
               }),
+            fiveStarWinRate: Object.keys(summary.fiveStarWinRate).map((e) => {
+              return [parseFloat(e), summary.fiveStarWinRate[e]];
+            }),
             fourStarList: Object.keys(summary.fourStarList)
               .map((key) => {
                 const percentage =
@@ -518,6 +592,9 @@ export class ConveneService implements OnApplicationBootstrap {
               .sort((a, b) => {
                 return b.total - a.total;
               }),
+            fourStarWinRate: Object.keys(summary.fourStarWinRate).map((e) => {
+              return [parseFloat(e), summary.fourStarWinRate[e]];
+            }),
             pullByDay: Object.keys(summary.pullByDay)
               .map((e) => {
                 return {

@@ -51,11 +51,20 @@ export class ConveneSummary extends Document<Types.ObjectId> {
   @Prop({ default: [] })
   pullByDay: { time: string; total: number }[];
 
+  @Prop()
+  winRateOff: number[][];
+
   @Prop({ default: [] })
   fiveStarList: { item: string; total: number; percentage: number }[];
 
+  @Prop()
+  fiveStarWinRate: number[][];
+
   @Prop({ default: [] })
   fourStarList: { item: string; total: number; percentage: number }[];
+
+  @Prop()
+  fourStarWinRate: number[][];
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
