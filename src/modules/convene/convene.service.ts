@@ -20,6 +20,7 @@ import Bottleneck from 'bottleneck';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import dayjs from 'dayjs';
+import fs from 'fs';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
@@ -283,6 +284,19 @@ export class ConveneService implements OnApplicationBootstrap {
     >('/api/getBanners', {
       baseURL: process.env.SITE_URL
     });
+    const pullData: {
+      [key: string]: number;
+    } = {};
+    const luckinessWinRateData: {
+      [key: string]: number;
+    } = {};
+    const luckinessFiveStarData: {
+      [key: string]: number;
+    } = {};
+    const luckinessFourStarData: {
+      [key: string]: number;
+    } = {};
+
     const summaryData: {
       [key: string]: {
         cardPoolType: number;
@@ -322,6 +336,12 @@ export class ConveneService implements OnApplicationBootstrap {
       const totalFiveStarWin: { [key: string]: number } = {};
       const totalFourStarWin: { [key: string]: number } = {};
       const totalWinRateOff: { [key: string]: number[] } = {};
+      const totalPulls = element.items
+        .map((e) => e.length)
+        .reduce((prev, e) => prev + e, 0);
+
+      pullData[`${totalPulls}`] ??= 0;
+      pullData[`${totalPulls}`] += 1;
 
       for (let i = 0; i < element.items.length; i += 1) {
         const cardPoolType = i + 1;
@@ -502,6 +522,22 @@ export class ConveneService implements OnApplicationBootstrap {
         summaryData[banner].fourStarWinRate[rate] ??= 0;
         summaryData[banner].fourStarWinRate[rate] += 1;
       });
+
+      // totalWinRateOff
+      // const luckinessWinRateData
+
+      const luckinessFiveStar = Object.keys(totalFiveStarWin)
+        .map((e) => {
+          return totalFiveStarWin[e];
+        })
+        .reduce((prev, e) => prev + e, 0);
+      const luckinessFourStar = Object.keys(totalFourStar)
+        .map((e) => {
+          return totalFourStar[e];
+        })
+        .reduce((prev, e) => prev + e, 0);
+      luckinessFiveStarData[`${luckinessFiveStar}`] ??= 0;
+      luckinessFourStarData[`${luckinessFourStar}`] += 1;
     }
 
     await Promise.all(
@@ -616,10 +652,37 @@ export class ConveneService implements OnApplicationBootstrap {
         );
       })
     );
+
+    fs.writeFileSync(
+      './resources/pullData.json',
+      JSON.stringify(
+        Object.keys(pullData).map((e) => {
+          return [parseFloat(e), pullData[e]];
+        })
+      )
+    );
+
+    fs.writeFileSync(
+      './resources/luckinessData.json',
+      JSON.stringify({
+        fiveStar: Object.keys(luckinessFiveStarData).map((e) => {
+          return [parseFloat(e), luckinessFiveStarData[e]];
+        }),
+        fourStar: Object.keys(luckinessFourStarData).map((e) => {
+          return [parseFloat(e), luckinessFourStarData[e]];
+        })
+      })
+    );
   }
 
   async summary() {
     const items = await this.conveneSummaryModel.find();
-    return { items };
+    const pullData = fs.existsSync('./resources/pullData.json')
+      ? JSON.parse(fs.readFileSync('./resources/pullData.json', 'utf-8'))
+      : [];
+    const luckinessData = fs.existsSync('./resources/luckinessData.json')
+      ? JSON.parse(fs.readFileSync('./resources/luckinessData.json', 'utf-8'))
+      : [];
+    return { items, pullData, luckinessData };
   }
 }
