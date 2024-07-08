@@ -27,8 +27,11 @@ export const ConveneStoreSchema = SchemaFactory.createForClass(ConveneStore);
 export type ConveneSummaryDocument = HydratedDocument<ConveneSummary>;
 @Schema({ collection: 'convene_summary' })
 export class ConveneSummary extends Document<Types.ObjectId> {
-  @Prop({ unique: true })
+  @Prop({ required: true, unique: true })
   banner: string;
+
+  @Prop({ required: true })
+  cardPoolType: number;
 
   @Prop({ default: 0 })
   totalPull: number;

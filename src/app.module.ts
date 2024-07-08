@@ -73,10 +73,7 @@ if (admin.apps.length === 0) {
   imports: [
     // core modules
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      serveStaticOptions: {
-        index: false
-      }
+      rootPath: join(__dirname, '..', 'public')
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

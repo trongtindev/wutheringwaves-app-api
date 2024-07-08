@@ -285,6 +285,7 @@ export class ConveneService implements OnApplicationBootstrap {
     });
     const summaryData: {
       [key: string]: {
+        cardPoolType: number;
         avgRc: {
           [key: string]: number[];
         };
@@ -367,6 +368,7 @@ export class ConveneService implements OnApplicationBootstrap {
           const matchBanner = matchBanners[matchBanners.length - 1];
 
           summaryData[matchBanner.name] ??= {
+            cardPoolType: matchBanner.type,
             totalPull: 0,
             totalUsers: [],
             winRateOff: {},
@@ -523,6 +525,7 @@ export class ConveneService implements OnApplicationBootstrap {
             banner
           },
           {
+            cardPoolType: summary.cardPoolType,
             totalPull: summary.totalPull,
             totalUsers: summary.totalUsers.length,
             // winRateOff: Object.keys(summary.winRateOff).map((e) => {
