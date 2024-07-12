@@ -269,7 +269,9 @@ export class ConveneService implements OnApplicationBootstrap {
   }
 
   async globalStatsCalculate(storeIds?: Types.ObjectId[]) {
-    const stores = await this.conveneStoreModel.find();
+    const pageSize = 100;
+    let offset = 0;
+
     const banners = await axios.get<
       {
         type: number;
@@ -328,216 +330,234 @@ export class ConveneService implements OnApplicationBootstrap {
       };
     } = {};
 
-    for (const element of stores) {
-      const rcData: { [key: string]: number } = {};
-      const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];
-      const totalFiveStar: { [key: string]: number } = {};
-      const totalFourStar: { [key: string]: number } = {};
-      const totalFiveStarWin: { [key: string]: number } = {};
-      const totalFourStarWin: { [key: string]: number } = {};
-      const totalWinRateOff: { [key: string]: number[] } = {};
-      const totalPulls = element.items
-        .map((e) => e.length)
-        .reduce((prev, e) => prev + e, 0);
-
-      pullData[`${totalPulls}`] ??= 0;
-      pullData[`${totalPulls}`] += 1;
-
-      for (let i = 0; i < element.items.length; i += 1) {
-        const cardPoolType = i + 1;
-
-        for (const convene of element.items[i]) {
-          const conveneName = (() => {
-            const character = this.characters.find(
-              (e) => e.id === convene.resourceId
-            );
-            if (character) return character.name;
-            const weapon = this.weapons.find(
-              (e) => e.id === convene.resourceId
-            );
-            if (weapon) return weapon.name;
-            return convene.name;
-          })();
-
-          const matchBanners = banners.data.filter((banner) => {
-            if (banner.time) {
-              const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
-              const timeStart = dayjs(banner.time.start)
-                .utcOffset(8)
-                .add(timeOffset - 8, 'hours');
-              const timeEnd = dayjs(banner.time.end)
-                .utcOffset(8)
-                .add(timeOffset - 8, 'hours');
-
-              const condition =
-                conveneTime >= timeStart &&
-                conveneTime <= timeEnd &&
-                banner.type === cardPoolType;
-
-              return condition;
-            }
-            return banner.type === cardPoolType;
-          });
-
-          if (matchBanners.length === 0) {
-            this.logger.verbose(
-              `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`
-            );
-            continue;
+    while (true) {
+      const stores = await this.conveneStoreModel
+        .find({
+          updatedAt: {
+            $lte: new Date()
           }
-          const matchBanner = matchBanners[matchBanners.length - 1];
+        })
+        .limit(pageSize)
+        .skip(offset);
+      if (stores.length === 0) break;
+      offset += pageSize;
 
-          summaryData[matchBanner.name] ??= {
-            cardPoolType: matchBanner.type,
-            totalPull: 0,
-            totalUsers: [],
-            winRateOff: {},
-            avgRc: {},
-            avgPity: Array.from(Array(90).keys()).map(() => {
-              return {
-                chance: 0,
-                totalPull: 0
-              };
-            }),
-            pullByDay: {},
-            fiveStarList: {},
-            fiveStarWinRate: {},
-            fourStarList: {},
-            fourStarWinRate: {}
-          };
+      for (const element of stores) {
+        const rcData: { [key: string]: number } = {};
+        const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];
+        const totalFiveStar: { [key: string]: number } = {};
+        const totalFourStar: { [key: string]: number } = {};
+        const totalFiveStarWin: { [key: string]: number } = {};
+        const totalFourStarWin: { [key: string]: number } = {};
+        const totalWinRateOff: { [key: string]: number[] } = {};
+        const totalPulls = element.items
+          .map((e) => e.length)
+          .reduce((prev, e) => prev + e, 0);
 
-          // winRateOff
-          totalWinRateOff[matchBanner.name] ??= [0, 0];
+        pullData[`${totalPulls}`] ??= 0;
+        pullData[`${totalPulls}`] += 1;
 
-          // totalPull
-          summaryData[matchBanner.name].totalPull += 1;
+        for (let i = 0; i < element.items.length; i += 1) {
+          const cardPoolType = i + 1;
 
-          // pullByDay
-          const date = convene.time.split(' ')[0];
-          summaryData[matchBanner.name].pullByDay[date] ??= 0;
-          summaryData[matchBanner.name].pullByDay[date] += 1;
+          for (const convene of element.items[i]) {
+            const conveneName = (() => {
+              const character = this.characters.find(
+                (e) => e.id === convene.resourceId
+              );
+              if (character) return character.name;
+              const weapon = this.weapons.find(
+                (e) => e.id === convene.resourceId
+              );
+              if (weapon) return weapon.name;
+              return convene.name;
+            })();
 
-          // totalUsers
-          if (
-            !summaryData[matchBanner.name].totalUsers.includes(element.playerId)
-          ) {
-            summaryData[matchBanner.name].totalUsers.push(element.playerId);
-          }
+            const matchBanners = banners.data.filter((banner) => {
+              if (banner.time) {
+                const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
+                const timeStart = dayjs(banner.time.start)
+                  .utcOffset(8)
+                  .add(timeOffset - 8, 'hours');
+                const timeEnd = dayjs(banner.time.end)
+                  .utcOffset(8)
+                  .add(timeOffset - 8, 'hours');
 
-          // avgRc
-          if (convene.qualityLevel >= 4) {
-            summaryData[matchBanner.name].avgRc[convene.name] ??= Array.from(
-              Array(8).keys()
-            ).map(() => {
-              return 0;
+                const condition =
+                  conveneTime >= timeStart &&
+                  conveneTime <= timeEnd &&
+                  banner.type === cardPoolType;
+
+                return condition;
+              }
+              return banner.type === cardPoolType;
             });
 
-            const rcKey = `${matchBanner.name}.${convene.name}`;
-
-            if (typeof rcData[rcKey] === 'undefined') {
-              rcData[rcKey] = 0;
-            } else {
-              rcData[rcKey] += 1;
-
-              if (
-                rcData[rcKey] >=
-                summaryData[matchBanner.name].avgRc[convene.name].length
-              ) {
-                rcData[rcKey] =
-                  summaryData[matchBanner.name].avgRc[convene.name].length - 1;
-              }
+            if (matchBanners.length === 0) {
+              this.logger.verbose(
+                `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`
+              );
+              continue;
             }
+            const matchBanner = matchBanners[matchBanners.length - 1];
 
-            const rcIndex = rcData[rcKey];
-            summaryData[matchBanner.name].avgRc[convene.name][rcIndex] += 1;
-          }
-
-          // avgPity
-          if (convene.qualityLevel === 5) {
-            let pity = 1;
-            for (let j = i + 1; j < element.items[i].length; j += 1) {
-              if (element.items[i][j].qualityLevel >= 5) {
-                break;
-              } else {
-                pity += 1;
-              }
-            }
-            summaryData[matchBanner.name].avgPity[pity].totalPull += 1;
-
-            // fiveStarList
-            summaryData[matchBanner.name].fiveStarList[convene.name] ??= {
-              total: 0,
-              resourceType: convene.resourceType
+            summaryData[matchBanner.name] ??= {
+              cardPoolType: matchBanner.type,
+              totalPull: 0,
+              totalUsers: [],
+              winRateOff: {},
+              avgRc: {},
+              avgPity: Array.from(Array(90).keys()).map(() => {
+                return {
+                  chance: 0,
+                  totalPull: 0
+                };
+              }),
+              pullByDay: {},
+              fiveStarList: {},
+              fiveStarWinRate: {},
+              fourStarList: {},
+              fourStarWinRate: {}
             };
-            summaryData[matchBanner.name].fiveStarList[convene.name].total += 1;
 
-            // fiveStarWinRateOff
-            if (matchBanner.featuredRare) {
-              totalFiveStar[matchBanner.name] ??= 0;
-              totalFiveStarWin[matchBanner.name] ??= 0;
+            // winRateOff
+            totalWinRateOff[matchBanner.name] ??= [0, 0];
 
-              totalFiveStar[matchBanner.name] += 1;
-              if (matchBanner.featuredRare === conveneName) {
-                totalFiveStarWin[matchBanner.name] += 1;
-                totalWinRateOff[matchBanner.name][0] += 1;
-              } else {
-                totalWinRateOff[matchBanner.name][1] += 1;
-              }
+            // totalPull
+            summaryData[matchBanner.name].totalPull += 1;
+
+            // pullByDay
+            const date = convene.time.split(' ')[0];
+            summaryData[matchBanner.name].pullByDay[date] ??= 0;
+            summaryData[matchBanner.name].pullByDay[date] += 1;
+
+            // totalUsers
+            if (
+              !summaryData[matchBanner.name].totalUsers.includes(
+                element.playerId
+              )
+            ) {
+              summaryData[matchBanner.name].totalUsers.push(element.playerId);
             }
-          } else if (convene.qualityLevel === 4) {
-            // fourStarList
-            summaryData[matchBanner.name].fourStarList[convene.name] ??= {
-              total: 0,
-              resourceType: convene.resourceType
-            };
-            summaryData[matchBanner.name].fourStarList[convene.name].total += 1;
 
-            // fourStarWinRateOff
-            if (matchBanner.featured) {
-              totalFourStar[matchBanner.name] ??= 1;
-              totalFourStarWin[matchBanner.name] ??= 0;
+            // avgRc
+            if (convene.qualityLevel >= 4) {
+              summaryData[matchBanner.name].avgRc[convene.name] ??= Array.from(
+                Array(8).keys()
+              ).map(() => {
+                return 0;
+              });
 
-              totalFourStar[matchBanner.name] += 1;
-              if (matchBanner.featured.includes(conveneName)) {
-                totalFourStarWin[matchBanner.name] += 1;
-                totalWinRateOff[matchBanner.name][0] += 1;
+              const rcKey = `${matchBanner.name}.${convene.name}`;
+
+              if (typeof rcData[rcKey] === 'undefined') {
+                rcData[rcKey] = 0;
               } else {
-                totalWinRateOff[matchBanner.name][1] += 1;
+                rcData[rcKey] += 1;
+
+                if (
+                  rcData[rcKey] >=
+                  summaryData[matchBanner.name].avgRc[convene.name].length
+                ) {
+                  rcData[rcKey] =
+                    summaryData[matchBanner.name].avgRc[convene.name].length -
+                    1;
+                }
+              }
+
+              const rcIndex = rcData[rcKey];
+              summaryData[matchBanner.name].avgRc[convene.name][rcIndex] += 1;
+            }
+
+            // avgPity
+            if (convene.qualityLevel === 5) {
+              let pity = 1;
+              for (let j = i + 1; j < element.items[i].length; j += 1) {
+                if (element.items[i][j].qualityLevel >= 5) {
+                  break;
+                } else {
+                  pity += 1;
+                }
+              }
+              summaryData[matchBanner.name].avgPity[pity].totalPull += 1;
+
+              // fiveStarList
+              summaryData[matchBanner.name].fiveStarList[convene.name] ??= {
+                total: 0,
+                resourceType: convene.resourceType
+              };
+              summaryData[matchBanner.name].fiveStarList[convene.name].total +=
+                1;
+
+              // fiveStarWinRateOff
+              if (matchBanner.featuredRare) {
+                totalFiveStar[matchBanner.name] ??= 0;
+                totalFiveStarWin[matchBanner.name] ??= 0;
+
+                totalFiveStar[matchBanner.name] += 1;
+                if (matchBanner.featuredRare === conveneName) {
+                  totalFiveStarWin[matchBanner.name] += 1;
+                  totalWinRateOff[matchBanner.name][0] += 1;
+                } else {
+                  totalWinRateOff[matchBanner.name][1] += 1;
+                }
+              }
+            } else if (convene.qualityLevel === 4) {
+              // fourStarList
+              summaryData[matchBanner.name].fourStarList[convene.name] ??= {
+                total: 0,
+                resourceType: convene.resourceType
+              };
+              summaryData[matchBanner.name].fourStarList[convene.name].total +=
+                1;
+
+              // fourStarWinRateOff
+              if (matchBanner.featured) {
+                totalFourStar[matchBanner.name] ??= 1;
+                totalFourStarWin[matchBanner.name] ??= 0;
+
+                totalFourStar[matchBanner.name] += 1;
+                if (matchBanner.featured.includes(conveneName)) {
+                  totalFourStarWin[matchBanner.name] += 1;
+                  totalWinRateOff[matchBanner.name][0] += 1;
+                } else {
+                  totalWinRateOff[matchBanner.name][1] += 1;
+                }
               }
             }
           }
         }
+
+        Object.keys(totalFiveStar).map((banner) => {
+          const total = totalFiveStar[banner];
+          const rate = totalFiveStarWin[banner] / total;
+          summaryData[banner].fiveStarWinRate[rate] ??= 0;
+          summaryData[banner].fiveStarWinRate[rate] += 1;
+        });
+
+        Object.keys(totalFourStar).map((banner) => {
+          const total = totalFourStar[banner];
+          const rate = totalFourStarWin[banner] / total;
+          summaryData[banner].fourStarWinRate[rate] ??= 0;
+          summaryData[banner].fourStarWinRate[rate] += 1;
+        });
+
+        // totalWinRateOff
+        // const luckinessWinRateData
+
+        const luckinessFiveStar = Object.keys(totalFiveStarWin)
+          .map((e) => {
+            return totalFiveStarWin[e];
+          })
+          .reduce((prev, e) => prev + e, 0);
+        const luckinessFourStar = Object.keys(totalFourStar)
+          .map((e) => {
+            return totalFourStar[e];
+          })
+          .reduce((prev, e) => prev + e, 0);
+        luckinessFiveStarData[`${luckinessFiveStar}`] ??= 0;
+        luckinessFourStarData[`${luckinessFourStar}`] += 1;
       }
-
-      Object.keys(totalFiveStar).map((banner) => {
-        const total = totalFiveStar[banner];
-        const rate = totalFiveStarWin[banner] / total;
-        summaryData[banner].fiveStarWinRate[rate] ??= 0;
-        summaryData[banner].fiveStarWinRate[rate] += 1;
-      });
-
-      Object.keys(totalFourStar).map((banner) => {
-        const total = totalFourStar[banner];
-        const rate = totalFourStarWin[banner] / total;
-        summaryData[banner].fourStarWinRate[rate] ??= 0;
-        summaryData[banner].fourStarWinRate[rate] += 1;
-      });
-
-      // totalWinRateOff
-      // const luckinessWinRateData
-
-      const luckinessFiveStar = Object.keys(totalFiveStarWin)
-        .map((e) => {
-          return totalFiveStarWin[e];
-        })
-        .reduce((prev, e) => prev + e, 0);
-      const luckinessFourStar = Object.keys(totalFourStar)
-        .map((e) => {
-          return totalFourStar[e];
-        })
-        .reduce((prev, e) => prev + e, 0);
-      luckinessFiveStarData[`${luckinessFiveStar}`] ??= 0;
-      luckinessFourStarData[`${luckinessFourStar}`] += 1;
     }
 
     await Promise.all(
