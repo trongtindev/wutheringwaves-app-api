@@ -1,7 +1,7 @@
 services:
   api:
     # build: ./
-    image: ghcr.io/trongtindev/astrite-app-api:latest
+    image: ghcr.io/trongtindev/wutheringwaves-app-api:latest
     restart: unless-stopped
     volumes:
       - ./tmp:/home/tmp
