@@ -674,7 +674,7 @@ export class ConveneService implements OnApplicationBootstrap {
     );
 
     fs.writeFileSync(
-      './resources/pullData.json',
+      './tmp/pullData.json',
       JSON.stringify(
         Object.keys(pullData).map((e) => {
           return [parseFloat(e), pullData[e]];
@@ -683,7 +683,7 @@ export class ConveneService implements OnApplicationBootstrap {
     );
 
     fs.writeFileSync(
-      './resources/luckinessData.json',
+      './tmp/luckinessData.json',
       JSON.stringify({
         fiveStar: Object.keys(luckinessFiveStarData).map((e) => {
           return [parseFloat(e), luckinessFiveStarData[e]];
@@ -697,11 +697,11 @@ export class ConveneService implements OnApplicationBootstrap {
 
   async summary() {
     const items = await this.conveneSummaryModel.find();
-    const pullData = fs.existsSync('./resources/pullData.json')
-      ? JSON.parse(fs.readFileSync('./resources/pullData.json', 'utf-8'))
+    const pullData = fs.existsSync('./tmp/pullData.json')
+      ? JSON.parse(fs.readFileSync('./tmp/pullData.json', 'utf-8'))
       : [];
-    const luckinessData = fs.existsSync('./resources/luckinessData.json')
-      ? JSON.parse(fs.readFileSync('./resources/luckinessData.json', 'utf-8'))
+    const luckinessData = fs.existsSync('./tmp/luckinessData.json')
+      ? JSON.parse(fs.readFileSync('./tmp/luckinessData.json', 'utf-8'))
       : [];
     return { items, pullData, luckinessData };
   }
