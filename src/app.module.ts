@@ -25,6 +25,7 @@ import { PostModule } from './modules/post/post.module';
 import { GuideModule } from './modules/guide/guide.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { IndexNowModule } from './modules/indexNow/indexNow.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -121,7 +122,8 @@ if (admin.apps.length === 0) {
     FileModule,
     MapModule,
     PostModule,
-    GuideModule
+    GuideModule,
+    IndexNowModule
   ],
   providers: [
     {

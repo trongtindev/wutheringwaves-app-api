@@ -21,6 +21,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import dayjs from 'dayjs';
 import fs from 'fs';
+import path from 'path';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
@@ -37,6 +38,7 @@ export class ConveneService implements OnApplicationBootstrap {
     timeOffset: { [key: string]: number };
     timeOffsetIds: { [key: string]: number };
   };
+  private tempData = path.resolve('./', '.tmp');
 
   constructor(
     private eventEmitter: EventEmitter2,
@@ -673,8 +675,9 @@ export class ConveneService implements OnApplicationBootstrap {
       })
     );
 
+    const pullDataFile = path.resolve(this.tempData, 'pullData.json');
     fs.writeFileSync(
-      './tmp/pullData.json',
+      pullDataFile,
       JSON.stringify(
         Object.keys(pullData).map((e) => {
           return [parseFloat(e), pullData[e]];
@@ -682,8 +685,9 @@ export class ConveneService implements OnApplicationBootstrap {
       )
     );
 
+    const luckinessDataFile = path.resolve(this.tempData, 'luckinessData.json');
     fs.writeFileSync(
-      './tmp/luckinessData.json',
+      luckinessDataFile,
       JSON.stringify({
         fiveStar: Object.keys(luckinessFiveStarData).map((e) => {
           return [parseFloat(e), luckinessFiveStarData[e]];
@@ -697,11 +701,14 @@ export class ConveneService implements OnApplicationBootstrap {
 
   async summary() {
     const items = await this.conveneSummaryModel.find();
-    const pullData = fs.existsSync('./tmp/pullData.json')
-      ? JSON.parse(fs.readFileSync('./tmp/pullData.json', 'utf-8'))
+    const pullDataFile = path.resolve(this.tempData, 'pullData.json');
+    const pullData = fs.existsSync(pullDataFile)
+      ? JSON.parse(fs.readFileSync(pullDataFile, 'utf-8'))
       : [];
-    const luckinessData = fs.existsSync('./tmp/luckinessData.json')
-      ? JSON.parse(fs.readFileSync('./tmp/luckinessData.json', 'utf-8'))
+
+    const luckinessDataFile = path.resolve(this.tempData, 'luckinessData.json');
+    const luckinessData = fs.existsSync(luckinessDataFile)
+      ? JSON.parse(fs.readFileSync(luckinessDataFile, 'utf-8'))
       : [];
     return { items, pullData, luckinessData };
   }
