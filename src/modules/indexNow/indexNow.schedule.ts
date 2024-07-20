@@ -6,7 +6,7 @@ import { IndexNowService } from './indexNow.service';
 export class IndexNowSchedule {
   constructor(private indexNowService: IndexNowService) {}
 
-  @Cron('0 1 * * *')
+  @Cron('0 * * * *')
   async submit() {
     if (process.env.NODE_ENV !== 'production') return;
     this.indexNowService.submit();
