@@ -7,6 +7,7 @@ import { IndexNowUrl } from './indexNow.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import Bottleneck from 'bottleneck';
+import { assert } from 'console';
 
 @Injectable()
 export class IndexNowService implements OnApplicationBootstrap {
@@ -82,17 +83,23 @@ export class IndexNowService implements OnApplicationBootstrap {
   }
 
   async submit() {
+    const { INDEXNOW_HOST, INDEXNOW_KEY, INDEXNOW_KEY_LOCATION } = process.env;
+    assert(INDEXNOW_HOST);
+    assert(INDEXNOW_KEY);
+    assert(INDEXNOW_KEY_LOCATION);
+
     const docs = await this.urlModel
       .find({
         submitted: false
       })
       .limit(1000);
+    if (docs.length === 0) return;
 
     this.logger.verbose(`submit(${docs.length})`);
     const result = await this.indexNow.post('/IndexNow', {
-      host: process.env.INDEXNOW_HOST,
-      key: process.env.INDEXNOW_KEY,
-      keyLocation: process.env.INDEXNOW_KEY_LOCATION,
+      host: INDEXNOW_HOST,
+      key: INDEXNOW_KEY,
+      keyLocation: INDEXNOW_KEY_LOCATION,
       urlList: docs.map((e) => e.url)
     });
     this.logger.verbose(`submit(${docs.length}) result: ${result.status}`);
@@ -105,7 +112,7 @@ export class IndexNowService implements OnApplicationBootstrap {
               filter: { url: doc.url },
               update: {
                 $set: {
-                  indexNow: true
+                  submitted: true
                 }
               }
             }
@@ -126,8 +133,9 @@ export class IndexNowService implements OnApplicationBootstrap {
         googleSubmitted: false
       })
       .limit(process.env.NODE_ENV === 'development' ? 1 : 200);
-    const worker = new Bottleneck({ maxConcurrent: 3 });
+    if (docs.length === 0) return;
 
+    const worker = new Bottleneck({ maxConcurrent: 3 });
     const key = JSON.parse(process.env.FIREBASE_ACCOUNT_KEY);
     const jwtClient = new google.auth.JWT(
       key.client_email,
