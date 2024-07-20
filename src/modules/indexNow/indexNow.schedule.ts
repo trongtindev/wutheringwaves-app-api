@@ -6,13 +6,13 @@ import { IndexNowService } from './indexNow.service';
 export class IndexNowSchedule {
   constructor(private indexNowService: IndexNowService) {}
 
-  @Cron('*/15 * * * *')
+  @Cron('0 1 * * *')
   async submit() {
     if (process.env.NODE_ENV !== 'production') return;
     this.indexNowService.submit();
   }
 
-  @Cron('*/30 * * * *')
+  @Cron('0 1 * * *')
   async submitGoogle() {
     if (process.env.NODE_ENV !== 'production') return;
     this.indexNowService.submitGoogle();
