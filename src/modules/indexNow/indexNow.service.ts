@@ -47,7 +47,7 @@ export class IndexNowService implements OnApplicationBootstrap {
       const { sites } = await sitemapper.fetch();
       this.logger.verbose(`fetchUrls()... ${sites.length}`);
 
-      await this.urlModel.bulkWrite(
+      const writes = await this.urlModel.bulkWrite(
         sites
           .filter((url) => {
             return (
@@ -71,14 +71,14 @@ export class IndexNowService implements OnApplicationBootstrap {
             };
           })
       );
+
+      this.logger.verbose(`fetchUrls()... done`);
+      if (writes.modifiedCount > 0 && process.env.NODE_ENV !== 'development') {
+        this.submit();
+        this.submitGoogle();
+      }
     } catch (error) {
       this.logger.error(error);
-    }
-
-    this.logger.verbose(`fetchUrls()... done`);
-    if (process.env.NODE_ENV !== 'development') {
-      this.submit();
-      this.submitGoogle();
     }
   }
 
