@@ -56,11 +56,11 @@ export class ConveneService implements OnApplicationBootstrap {
     axiosRetry(api);
 
     // load weapons
-    const weapons = await api.get('/api/getWeapons');
+    const weapons = await api.get('/api/resources/weapons');
     this.weapons = weapons.data;
 
     // load characters
-    const characters = await api.get('/api/getCharacters');
+    const characters = await api.get('/api/resources/characters');
     this.characters = characters.data;
 
     // load timeOffset
