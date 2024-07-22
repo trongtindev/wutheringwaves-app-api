@@ -1,6 +1,5 @@
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import {
-  Inject,
+  BadRequestException,
   Injectable,
   Logger,
   UnauthorizedException
@@ -22,22 +21,41 @@ export class AuthService {
 
   constructor(
     private eventEmitter: EventEmitter2,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private userService: UserService,
     private jwtService: JwtService
   ) {
-    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+    const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SITE_URL } = process.env;
     assert(GOOGLE_CLIENT_ID);
     assert(GOOGLE_CLIENT_SECRET);
 
     this.authClient = new OAuth2Client({
       clientId: GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_CLIENT_SECRET
+      clientSecret: GOOGLE_CLIENT_SECRET,
+      redirectUri: SITE_URL
     });
   }
 
-  async signIn(idToken: string) {
-    const result = await this.authClient.verifyIdToken({ idToken });
+  async signIn(args: { code?: string; idToken?: string }) {
+    if (args.code) {
+      try {
+        this.logger.verbose(`signIn() getToken()`, args.code);
+        const token = await this.authClient.getToken(args.code);
+        if (!token.tokens.id_token) {
+          throw new BadRequestException();
+        }
+        args.idToken ??= token.tokens.id_token;
+      } catch (error) {
+        console.log(error);
+        this.logger.error(error);
+        throw new BadRequestException(error.message || error);
+      }
+    }
+
+    this.logger.verbose(`signIn() verifyIdToken()`);
+    const result = await this.authClient.verifyIdToken({
+      idToken: args.idToken
+    });
+
     const { email, name, picture } = result.getPayload();
     const user = await this.userService.upsert({
       email,
@@ -135,5 +153,15 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     return decoded;
+  }
+
+  async getRedirectUrl(scope?: string[]) {
+    return this.authClient.generateAuthUrl({
+      access_type: 'offline',
+      scope: scope || [
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+      ]
+    });
   }
 }

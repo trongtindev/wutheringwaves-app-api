@@ -1,8 +1,13 @@
-import { IsJWT } from 'class-validator';
+import { IsJWT, IsOptional, IsString } from 'class-validator';
 
 export class AuthSignInBodyDto {
+  @IsString()
+  @IsOptional()
+  code: string;
+
   @IsJWT()
-  credential: string;
+  @IsOptional()
+  idToken: string;
 }
 
 export class AuthRefreshBodyDto {

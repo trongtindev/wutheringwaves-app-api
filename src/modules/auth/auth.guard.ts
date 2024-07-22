@@ -26,6 +26,7 @@ export class AuthGuard implements CanActivate {
     try {
       request.auth = await this.authService.verifyAccessToken(token);
       request.user = await this.userService.findByEmail(request.auth.email);
+      if (!request.user) throw new UnauthorizedException();
     } catch (error) {
       this.logger.verbose(error);
       throw new UnauthorizedException();
