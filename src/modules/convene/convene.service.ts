@@ -6,7 +6,6 @@ import {
   OnApplicationBootstrap
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AuthData } from '../auth/auth.interface';
 import { ConveneStore, ConveneSummary } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -80,7 +79,6 @@ export class ConveneService implements OnApplicationBootstrap {
     url: string,
     args: {
       userAgent: string;
-      auth?: AuthData;
       skipMerge?: boolean;
     }
   ) {

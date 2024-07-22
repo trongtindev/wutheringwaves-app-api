@@ -1,9 +1,5 @@
-import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { UserRecord } from 'firebase-admin/lib/auth/user-record';
+import { UserDocument } from '../user/user.schema';
 
-export interface AuthData extends DecodedIdToken {}
-
-export interface AuthVerifyEventArgs {
-  auth: DecodedIdToken;
-  userRecord: UserRecord;
+export interface AuthAfterSignInArgs {
+  document: UserDocument;
 }

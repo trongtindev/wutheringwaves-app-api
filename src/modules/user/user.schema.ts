@@ -5,17 +5,11 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ collection: 'users' })
 export class User extends Document<Types.ObjectId> {
-  @Prop({ required: true, unique: true })
-  uid: string;
-
   @Prop({})
   name: string;
 
-  @Prop({ index: true })
-  email?: string;
-
-  @Prop({ index: true })
-  disabled?: boolean;
+  @Prop({ unique: true })
+  email: string;
 
   @Prop({})
   photoUrl?: string;

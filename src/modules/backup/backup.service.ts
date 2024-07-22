@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as admin from 'firebase-admin';
-import { AuthData } from '../auth/auth.interface';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class BackupService {
@@ -14,7 +14,7 @@ export class BackupService {
    * @param auth
    */
   async get(
-    auth: AuthData,
+    user: Types.ObjectId,
     options?: {
       withData?: boolean;
     }
@@ -24,14 +24,14 @@ export class BackupService {
     const exists = await admin
       .storage()
       .bucket()
-      .file(`backup/${auth.uid}.json`)
+      .file(`backup/${user.id}.json`)
       .exists();
 
     if (exists[0]) {
       const file = await admin
         .storage()
         .bucket()
-        .file(`backup/${auth.uid}.json`)
+        .file(`backup/${user.id}.json`)
         .get();
 
       return {
@@ -57,12 +57,12 @@ export class BackupService {
    * @param auth
    */
   async put(
-    auth: AuthData,
+    user: Types.ObjectId,
     args: {
       data: string;
     }
   ) {
-    this.logger.verbose(`put(${auth.uid})`);
+    this.logger.verbose(`put(${user.id})`);
 
     const json = JSON.parse(args.data);
     if (!json) throw new BadRequestException('json is required');
@@ -75,28 +75,28 @@ export class BackupService {
     await admin
       .storage()
       .bucket()
-      .file(`backup/${auth.uid}.json`)
+      .file(`backup/${user.id}.json`)
       .save(JSON.stringify(json));
-    this.logger.verbose(`put(${auth.uid}) done! ${args.data.length}`);
+    this.logger.verbose(`put(${user.id}) done! ${args.data.length}`);
 
-    return await this.get(auth);
+    return await this.get(user);
   }
 
   /**
    *
    * @param auth
    */
-  async eraseAll(auth: AuthData) {
-    this.logger.verbose(`eraseAll(${auth.uid})`);
+  async eraseAll(user: Types.ObjectId) {
+    this.logger.verbose(`eraseAll(${user.id})`);
 
-    const file = await admin
+    const [result] = await admin
       .storage()
       .bucket()
-      .file(`backup/${auth.uid}.json`)
+      .file(`backup/${user.id}.json`)
       .get({ autoCreate: false });
 
-    if (await file[0].exists()) {
-      await file[0].delete();
+    if (await result.exists()) {
+      await result.delete();
     }
   }
 }

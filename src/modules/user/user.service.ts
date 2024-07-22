@@ -3,7 +3,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, UserDocument } from './user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { IUser } from './user.interface';
 
 @Injectable()
@@ -34,25 +33,28 @@ export class UserService {
     return await this.userModel.findById(id);
   }
 
-  async findByUid(uid: string): Promise<UserDocument | null> {
-    return await this.userModel.findOne({ uid });
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return await this.userModel.findOne({ email });
   }
 
-  async upsert(userRecord: UserRecord): Promise<void> {
+  async upsert(args: {
+    email: string;
+    name: string;
+    photoUrl: string;
+  }): Promise<UserDocument> {
     await this.userModel.updateOne(
       {
-        uid: userRecord.uid
+        email: args.email
       },
       {
-        name: userRecord.displayName || userRecord.uid,
-        email: userRecord.email,
-        disabled: userRecord.disabled,
-        photoUrl: userRecord.photoURL,
+        name: args.name,
+        photoUrl: args.photoUrl,
         updatedAt: new Date()
       },
       {
         upsert: true
       }
     );
+    return await this.findByEmail(args.email)!;
   }
 }

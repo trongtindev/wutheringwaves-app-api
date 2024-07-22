@@ -20,12 +20,12 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<any>();
-    const authorization = this.extractTokenFromHeader(request);
-    if (!authorization) throw new UnauthorizedException();
+    const token = this.extractTokenFromHeader(request);
+    if (!token) throw new UnauthorizedException();
 
     try {
-      request.auth = await this.authService.verifyIdToken(authorization);
-      request.user = await this.userService.findByUid(request.auth.uid);
+      request.auth = await this.authService.verifyAccessToken(token);
+      request.user = await this.userService.findByEmail(request.auth.email);
     } catch (error) {
       this.logger.verbose(error);
       throw new UnauthorizedException();
@@ -51,12 +51,12 @@ export class AuthGuardNullable implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<any>();
-    const authorization = this.extractTokenFromHeader(request);
-    if (!authorization) return true;
+    const token = this.extractTokenFromHeader(request);
+    if (!token) return true;
 
     try {
-      request.auth = await this.authService.verifyIdToken(authorization);
-      request.user = await this.userService.findByUid(request.auth.uid);
+      request.auth = await this.authService.verifyAccessToken(token);
+      request.user = await this.userService.findByEmail(request.auth.email);
     } catch (error) {
       this.logger.verbose(error);
     }

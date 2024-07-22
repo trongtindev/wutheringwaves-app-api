@@ -11,8 +11,8 @@ import { BackupService } from './backup.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { GetBackupQueryDto, PutBackupBodyDto } from './backup.dto';
 import { AuthDecorator } from '../auth/auth.decorator';
-import { AuthData } from '../auth/auth.interface';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserDocument } from '../user/user.schema';
 
 @ApiTags('backup')
 @Controller('backup')
@@ -23,10 +23,10 @@ export class BackupController {
   @UseGuards(AuthGuard)
   @Get()
   async get(
-    @AuthDecorator() auth: AuthData,
+    @AuthDecorator() user: UserDocument,
     @Query() query: GetBackupQueryDto
   ) {
-    return await this.backupService.get(auth, {
+    return await this.backupService.get(user._id, {
       withData: query.withData
     });
   }
@@ -34,8 +34,11 @@ export class BackupController {
   @ApiResponse({ description: 'Upload new backup' })
   @UseGuards(AuthGuard)
   @Post()
-  async put(@AuthDecorator() auth: AuthData, @Body() body: PutBackupBodyDto) {
-    return await this.backupService.put(auth, {
+  async put(
+    @AuthDecorator() user: UserDocument,
+    @Body() body: PutBackupBodyDto
+  ) {
+    return await this.backupService.put(user._id, {
       data: body.data
     });
   }
@@ -43,7 +46,7 @@ export class BackupController {
   @ApiResponse({ description: 'Delete current backup' })
   @UseGuards(AuthGuard)
   @Delete()
-  async eraseAll(@AuthDecorator() auth: AuthData) {
-    return await this.backupService.eraseAll(auth);
+  async eraseAll(@AuthDecorator() user: UserDocument) {
+    return await this.backupService.eraseAll(user._id);
   }
 }

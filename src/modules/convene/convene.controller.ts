@@ -1,8 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ConveneService } from './convene.service';
 import { AuthGuardNullable } from '../auth/auth.guard';
-import { AuthDecorator } from '../auth/auth.decorator';
-import { AuthData } from '../auth/auth.interface';
 import { ImportConveneBodyDto } from './convene.dto';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -13,13 +11,9 @@ export class ConveneController {
 
   @UseGuards(AuthGuardNullable)
   @Post('import')
-  async import(
-    @AuthDecorator() auth: AuthData | undefined,
-    @Body() body: ImportConveneBodyDto
-  ) {
+  async import(@Body() body: ImportConveneBodyDto) {
     return await this.conveneService.import(body.url, {
       userAgent: body.userAgent,
-      auth,
       skipMerge: body.skipMerge
     });
   }
