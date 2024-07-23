@@ -22,10 +22,10 @@ import { CommentModule } from './modules/comment/comment.module';
 import { FileModule } from './modules/file/file.module';
 import { MapModule } from './modules/map/map.module';
 import { PostModule } from './modules/post/post.module';
-import { GuideModule } from './modules/guide/guide.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { IndexNowModule } from './modules/indexNow/indexNow.module';
+import { AIModule } from './modules/ai/ai.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -122,8 +122,8 @@ if (admin.apps.length === 0) {
     FileModule,
     MapModule,
     PostModule,
-    GuideModule,
-    IndexNowModule
+    IndexNowModule,
+    AIModule
   ],
   providers: [
     {

@@ -1,28 +1,57 @@
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
-  IsEnum,
+  IsLocale,
   IsMongoId,
   IsOptional,
   IsString,
-  Length
+  Length,
+  MaxLength,
+  MinLength,
+  ArrayMinSize,
+  ArrayMaxSize,
+  IsArray
 } from 'class-validator';
 import striptags from 'striptags';
 import config from './post.config';
-import { PostTypeEnum } from './post.types';
+import urlSlug from 'url-slug';
+import { QueryDto } from '@/app.dto';
+
+export class PostListQueryDto extends QueryDto {
+  @IsOptional()
+  @IsMongoId({ each: true })
+  @IsArray()
+  categories?: string[];
+}
 
 export class PostCreateBodyDto {
-  @IsEnum(PostTypeEnum)
-  type: PostTypeEnum;
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }: TransformFnParams) => urlSlug(value))
+  @MinLength(5)
+  @MaxLength(255)
+  slug: string;
 
-  @IsMongoId()
-  category: string;
+  @IsLocale()
+  @MinLength(2)
+  @MaxLength(2)
+  locale: string;
+
+  @IsMongoId({ each: true })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  categories: string[];
 
   @IsMongoId()
   thumbnail: string;
 
   @IsString()
-  @Length(20, 100)
+  @Length(20, 180)
   title: string;
+
+  @IsString()
+  @Length(20, 300)
+  description: string;
 
   @IsString()
   @Length(500, 20000)
@@ -34,4 +63,15 @@ export class PostCreateBodyDto {
   @IsMongoId({ each: true })
   @IsOptional()
   attachments: string[];
+}
+
+export class PostIdParamDto {
+  @IsMongoId()
+  id: string;
+}
+
+export class PostSlugParamDto {
+  @IsString()
+  @MaxLength(255)
+  slug: string;
 }

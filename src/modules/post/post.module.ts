@@ -5,6 +5,8 @@ import {
   Post,
   PostCategory,
   PostCategorySchema,
+  PostRevision,
+  PostRevisionSchema,
   PostSchema
 } from './post.schema';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -16,6 +18,7 @@ import { PostSchedule } from './post.schedule';
   imports: [
     MongooseModule.forFeature([
       { name: Post.name, schema: PostSchema },
+      { name: PostRevision.name, schema: PostRevisionSchema },
       { name: PostCategory.name, schema: PostCategorySchema }
     ])
   ],

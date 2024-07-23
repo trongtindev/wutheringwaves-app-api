@@ -245,7 +245,7 @@ export class FileService implements OnApplicationBootstrap {
 
   async cleanup(): Promise<void> {
     const expires = new Date();
-    expires.setMinutes(expires.getMinutes() - 15);
+    expires.setMinutes(expires.getMinutes() - 60);
 
     const items = await this.model
       .find({

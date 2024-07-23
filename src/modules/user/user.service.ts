@@ -14,11 +14,14 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<User>
   ) {}
 
-  async resolve(document: UserDocument): Promise<IUser> {
+  async resolve(user: Types.ObjectId | UserDocument): Promise<IUser> {
+    if (user instanceof Types.ObjectId) {
+      user = await this.get(user);
+    }
     return {
-      id: document.id,
-      name: document.name,
-      photoUrl: document.photoUrl
+      id: user.id,
+      name: user.name,
+      photoUrl: user.photoUrl
     };
   }
 
