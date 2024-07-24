@@ -6,6 +6,7 @@ import { Types } from 'mongoose';
 @Injectable()
 export class BackupService {
   private logger = new Logger(BackupService.name);
+  private storePath = 'cloud-sync';
 
   constructor(private eventEmitter: EventEmitter2) {}
 
@@ -19,19 +20,20 @@ export class BackupService {
       withData?: boolean;
     }
   ) {
+    const key = user.toString();
     options ??= {};
 
-    const exists = await admin
+    const [exists] = await admin
       .storage()
       .bucket()
-      .file(`backup/${user.id}.json`)
+      .file(`${this.storePath}/${key}.json`)
       .exists();
 
-    if (exists[0]) {
-      const file = await admin
+    if (exists) {
+      const [file] = await admin
         .storage()
         .bucket()
-        .file(`backup/${user.id}.json`)
+        .file(`${this.storePath}/${key}.json`)
         .get();
 
       return {
@@ -41,8 +43,8 @@ export class BackupService {
             return JSON.parse(Buffer.from(json[0]).toString('utf-8'));
           }
         })(),
-        size: file[0].metadata.size,
-        createdAt: file[0].metadata.timeCreated
+        size: file.metadata.size,
+        createdAt: file.metadata.timeCreated
       };
     }
 
@@ -62,7 +64,8 @@ export class BackupService {
       data: string;
     }
   ) {
-    this.logger.verbose(`put(${user.id})`);
+    const key = user.toString();
+    this.logger.verbose(`put(${key})`);
 
     const json = JSON.parse(args.data);
     if (!json) throw new BadRequestException('json is required');
@@ -75,9 +78,9 @@ export class BackupService {
     await admin
       .storage()
       .bucket()
-      .file(`backup/${user.id}.json`)
+      .file(`${this.storePath}/${key}.json`)
       .save(JSON.stringify(json));
-    this.logger.verbose(`put(${user.id}) done! ${args.data.length}`);
+    this.logger.verbose(`put(${key}) done! ${args.data.length}`);
 
     return await this.get(user);
   }
@@ -87,12 +90,13 @@ export class BackupService {
    * @param auth
    */
   async eraseAll(user: Types.ObjectId) {
-    this.logger.verbose(`eraseAll(${user.id})`);
+    const key = user.toString();
+    this.logger.verbose(`eraseAll(${key})`);
 
     const [result] = await admin
       .storage()
       .bucket()
-      .file(`backup/${user.id}.json`)
+      .file(`${this.storePath}/${key}.json`)
       .get({ autoCreate: false });
 
     if (await result.exists()) {
