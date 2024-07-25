@@ -8,7 +8,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConveneStore, ConveneSummary } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { ProxyService } from '../proxy/proxy.service';
 import { ConveneEventType } from './convene.types';
 import {
@@ -52,19 +52,21 @@ export class ConveneService implements OnApplicationBootstrap {
     const api = axios.create({
       baseURL: process.env.SITE_URL
     });
-    axiosRetry(api);
+    if (process.env.NODE_ENV !== 'development') axiosRetry(api);
 
-    // load weapons
-    const weapons = await api.get('/api/resources/weapons');
-    this.weapons = weapons.data;
-
-    // load characters
-    const characters = await api.get('/api/resources/characters');
-    this.characters = characters.data;
-
-    // load timeOffset
-    const timeOffset = await api.get('/api/getTimeOffset');
-    this.timeOffset = timeOffset.data;
+    const loadWeapons = async () => {
+      const weapons = await api.get('/api/resources/weapons');
+      this.weapons = weapons.data;
+    };
+    const loadCharacters = async () => {
+      const characters = await api.get('/api/resources/characters');
+      this.characters = characters.data;
+    };
+    const loadTimeOffset = async () => {
+      const timeOffset = await api.get('/api/getTimeOffset');
+      this.timeOffset = timeOffset.data;
+    };
+    await Promise.all([loadWeapons(), loadCharacters(), loadTimeOffset()]);
 
     // start global calculate
     if (process.env.NODE_ENV === 'development') {
@@ -268,7 +270,9 @@ export class ConveneService implements OnApplicationBootstrap {
     };
   }
 
-  async globalStatsCalculate(storeIds?: Types.ObjectId[]) {
+  async globalStatsCalculate() {
+    this.logger.verbose(`globalStatsCalculate()`);
+
     const pageSize = 100;
     let offset = 0;
 
@@ -283,7 +287,7 @@ export class ConveneService implements OnApplicationBootstrap {
         featuredRare?: string;
         featured?: string[];
       }[]
-    >('/api/getBanners', {
+    >('/api/resources/banners', {
       baseURL: process.env.SITE_URL
     });
     const pullData: {

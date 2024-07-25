@@ -9,9 +9,7 @@ import {
 } from './tier-list.dto';
 import { ICreateTierListResponse } from './tier-list.interface';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('tier-list')
 @Controller('tier-list')
 export class TierListController {
   constructor(private tierListService: TierListService) {}

@@ -10,7 +10,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
 import { AuthModule } from './modules/auth/auth.module';
-import { BackupModule } from './modules/backup/backup.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { ConveneModule } from './modules/convene/convene.module';
 import { TierListModule } from './modules/tier-list/tier-list.module';
@@ -26,6 +25,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { IndexNowModule } from './modules/indexNow/indexNow.module';
 import { AIModule } from './modules/ai/ai.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -113,7 +113,7 @@ if (admin.apps.length === 0) {
     }),
     // custom modules
     AuthModule,
-    BackupModule,
+    SyncModule,
     ProxyModule,
     ConveneModule,
     TierListModule,

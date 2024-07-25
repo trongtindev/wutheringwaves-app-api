@@ -4,42 +4,40 @@ import * as admin from 'firebase-admin';
 import { Types } from 'mongoose';
 
 @Injectable()
-export class BackupService {
-  private logger = new Logger(BackupService.name);
-  private storePath = 'cloud-sync';
+export class SyncService {
+  private logger = new Logger(SyncService.name);
+  private path = process.env.SYNC_PATH;
 
   constructor(private eventEmitter: EventEmitter2) {}
 
-  /**
-   *
-   * @param auth
-   */
-  async get(
+  async pull(
     user: Types.ObjectId,
     options?: {
       withData?: boolean;
     }
   ) {
     const key = user.toString();
+    this.logger.verbose(`pull(${key})`);
+
     options ??= {};
 
     const [exists] = await admin
       .storage()
       .bucket()
-      .file(`${this.storePath}/${key}.json`)
+      .file(`${this.path}/${key}.json`)
       .exists();
 
     if (exists) {
       const [file] = await admin
         .storage()
         .bucket()
-        .file(`${this.storePath}/${key}.json`)
+        .file(`${this.path}/${key}.json`)
         .get();
 
       return {
         data: await (async () => {
           if (options.withData) {
-            const json = await file[0].download();
+            const json = await file.download();
             return JSON.parse(Buffer.from(json[0]).toString('utf-8'));
           }
         })(),
@@ -54,18 +52,14 @@ export class BackupService {
     };
   }
 
-  /**
-   *
-   * @param auth
-   */
-  async put(
+  async push(
     user: Types.ObjectId,
     args: {
       data: string;
     }
   ) {
     const key = user.toString();
-    this.logger.verbose(`put(${key})`);
+    this.logger.verbose(`push(${key})`);
 
     const json = JSON.parse(args.data);
     if (!json) throw new BadRequestException('json is required');
@@ -78,29 +72,25 @@ export class BackupService {
     await admin
       .storage()
       .bucket()
-      .file(`${this.storePath}/${key}.json`)
+      .file(`${this.path}/${key}.json`)
       .save(JSON.stringify(json));
     this.logger.verbose(`put(${key}) done! ${args.data.length}`);
 
-    return await this.get(user);
+    return await this.pull(user);
   }
 
-  /**
-   *
-   * @param auth
-   */
   async eraseAll(user: Types.ObjectId) {
     const key = user.toString();
     this.logger.verbose(`eraseAll(${key})`);
 
-    const [result] = await admin
+    const [file] = await admin
       .storage()
       .bucket()
-      .file(`${this.storePath}/${key}.json`)
+      .file(`${this.path}/${key}.json`)
       .get({ autoCreate: false });
 
-    if (await result.exists()) {
-      await result.delete();
+    if (await file.exists()) {
+      await file.delete();
     }
   }
 }

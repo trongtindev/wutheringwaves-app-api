@@ -16,12 +16,9 @@ import { FileService } from './file.service';
 import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import { IFile } from './file.interface';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Types } from 'mongoose';
 
-@ApiTags('files')
-@ApiBearerAuth()
 @Controller('files')
 export class FileController {
   private logger = new Logger(FileController.name);

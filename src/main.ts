@@ -4,7 +4,6 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
 import { AppGuard } from './app.guard';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -37,15 +36,6 @@ async function bootstrap() {
       saveUninitialized: false
     })
   );
-
-  const config = new DocumentBuilder()
-    .setTitle('Wuthering Waves')
-    .setDescription('Wuthering Waves API')
-    .setVersion('1.0')
-    .addTag('v1')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
 
   await app.listen(process.env.PORT);
   console.log(`Local: http://localhost:${process.env.PORT}.`);

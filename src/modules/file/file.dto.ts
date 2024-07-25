@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   ValidateIf,
   ArrayMinSize,
@@ -14,7 +13,6 @@ import {
 } from 'nestjs-form-data';
 
 export class UploadFileBodyDto {
-  @ApiProperty({ description: '...' })
   @IsFile()
   @MinFileSize(1024)
   @MaxFileSize(1024 * 1024 * 10)
@@ -22,7 +20,6 @@ export class UploadFileBodyDto {
   @ValidateIf((object, value) => typeof value !== 'undefined')
   file?: MemoryStoredFile;
 
-  @ApiProperty({ description: '...' })
   @ArrayMinSize(1)
   @ArrayMaxSize(10)
   @IsFile({ each: true })
