@@ -1,20 +1,11 @@
 import { QueryDto } from '@/app.dto';
 import { Transform, TransformFnParams } from 'class-transformer';
-import {
-  IsMongoId,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Length,
-  ValidateIf
-} from 'class-validator';
+import { IsMongoId, IsOptional, IsString, Length } from 'class-validator';
 import striptags from 'striptags';
 
 export class ListCommentQueryDto extends QueryDto {
-  @IsUrl({
-    host_whitelist: ['localhost:3000', 'wutheringwaves.app']
-  })
-  @ValidateIf(() => process.env.NODE_ENV === 'production')
+  @IsString()
+  @Length(1, 255)
   channel: string;
 }
 
@@ -24,10 +15,8 @@ export class CommentParamDto {
 }
 
 export class CreateCommentBodyDto {
-  @IsUrl({
-    host_whitelist: ['localhost:3000', 'wutheringwaves.app']
-  })
-  @ValidateIf(() => process.env.NODE_ENV === 'production')
+  @IsString()
+  @Length(1, 255)
   channel: string;
 
   @IsString()

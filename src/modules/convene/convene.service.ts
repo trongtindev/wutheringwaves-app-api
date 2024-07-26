@@ -21,18 +21,11 @@ import axiosRetry from 'axios-retry';
 import dayjs from 'dayjs';
 import fs from 'fs';
 import path from 'path';
+import { ResourceService } from '../resource/resource.service';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
   private logger = new Logger(ConveneService.name);
-  private weapons: {
-    id: number;
-    name: string;
-  }[];
-  private characters: {
-    id: number;
-    name: string;
-  }[];
   private timeOffset: {
     timeOffset: { [key: string]: number };
     timeOffsetIds: { [key: string]: number };
@@ -45,7 +38,8 @@ export class ConveneService implements OnApplicationBootstrap {
     private conveneStoreModel: Model<ConveneStore>,
     @InjectModel(ConveneSummary.name)
     private conveneSummaryModel: Model<ConveneSummary>,
-    private proxyService: ProxyService
+    private proxyService: ProxyService,
+    private resourceService: ResourceService
   ) {}
 
   async onApplicationBootstrap() {
@@ -54,19 +48,11 @@ export class ConveneService implements OnApplicationBootstrap {
     });
     if (process.env.NODE_ENV !== 'development') axiosRetry(api);
 
-    const loadWeapons = async () => {
-      const weapons = await api.get('/api/resources/weapons');
-      this.weapons = weapons.data;
-    };
-    const loadCharacters = async () => {
-      const characters = await api.get('/api/resources/characters');
-      this.characters = characters.data;
-    };
     const loadTimeOffset = async () => {
       const timeOffset = await api.get('/api/getTimeOffset');
       this.timeOffset = timeOffset.data;
     };
-    await Promise.all([loadWeapons(), loadCharacters(), loadTimeOffset()]);
+    await Promise.all([loadTimeOffset()]);
 
     // start global calculate
     if (process.env.NODE_ENV === 'development') {
@@ -138,14 +124,16 @@ export class ConveneService implements OnApplicationBootstrap {
         }
 
         const [name, resourceType] = (() => {
-          const character = this.characters.find(
+          const character = this.resourceService.characters.find(
             (e) => e.id === convene.resourceId
           );
           if (character) {
             return [character.name, 'Resonator'];
           }
 
-          const weapon = this.weapons.find((e) => e.id === convene.resourceId);
+          const weapon = this.resourceService.weapons.find(
+            (e) => e.id === convene.resourceId
+          );
           if (weapon) {
             return [weapon.name, 'Weapon'];
           }
@@ -366,11 +354,11 @@ export class ConveneService implements OnApplicationBootstrap {
 
           for (const convene of element.items[i]) {
             const conveneName = (() => {
-              const character = this.characters.find(
+              const character = this.resourceService.characters.find(
                 (e) => e.id === convene.resourceId
               );
               if (character) return character.name;
-              const weapon = this.weapons.find(
+              const weapon = this.resourceService.weapons.find(
                 (e) => e.id === convene.resourceId
               );
               if (weapon) return weapon.name;

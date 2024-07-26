@@ -6,7 +6,7 @@ export type CommentChannelDocument = HydratedDocument<CommentChannel>;
 @Schema({ collection: 'comment_channels' })
 export class CommentChannel extends Document<Types.ObjectId> {
   @Prop({ required: true, unique: true })
-  url: string;
+  key: string;
 
   @Prop({ default: [] })
   comments: Types.ObjectId[];

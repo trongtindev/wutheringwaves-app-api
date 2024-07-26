@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Comment,
@@ -12,10 +17,12 @@ import { IAfterCreateCommentEventArgs, IComment } from './comment.interface';
 import { CommentEventType } from './comment.types';
 import { FileService } from '../file/file.service';
 import { UserService } from '../user/user.service';
+import { ResourceService } from '../resource/resource.service';
 
 @Injectable()
 export class CommentService {
   private logger = new Logger(CommentService.name);
+  private whitelistChannels = ['codes'];
 
   constructor(
     private eventEmitter: EventEmitter2,
@@ -23,7 +30,8 @@ export class CommentService {
     @InjectModel(CommentChannel.name)
     private commentChannelModel: Model<CommentChannel>,
     private fileService: FileService,
-    private userService: UserService
+    private userService: UserService,
+    private resourceService: ResourceService
   ) {}
 
   async resolve(document: CommentDocument): Promise<IComment> {
@@ -47,15 +55,39 @@ export class CommentService {
     };
   }
 
-  async upsertChannel(url: string): Promise<CommentChannelDocument> {
-    const document = await this.commentChannelModel.findOne({
-      url
-    });
-    if (document) return document;
+  async upsertChannel(key: string): Promise<CommentChannelDocument> {
+    if (!this.whitelistChannels.includes(key)) {
+      if (!key.includes('.')) {
+        throw new BadRequestException();
+      }
 
-    return await this.commentChannelModel.create({
-      url
-    });
+      const [keyName, keyValue] = key.split('.');
+      if (keyName === 'character') {
+        if (!this.resourceService.characters.find((e) => e.slug === keyValue)) {
+          throw new BadRequestException();
+        }
+      } else if (keyName === 'echo') {
+        if (!this.resourceService.echoes.find((e) => e.slug === keyValue)) {
+          throw new BadRequestException();
+        }
+      } else if (keyName === 'item') {
+        if (!this.resourceService.items.find((e) => e.slug === keyValue)) {
+          throw new BadRequestException();
+        }
+      } else if (keyName === 'trophy') {
+        if (!this.resourceService.trophies.find((e) => e.slug === keyValue)) {
+          throw new BadRequestException();
+        }
+      } else if (keyName === 'weapon') {
+        if (!this.resourceService.weapons.find((e) => e.slug === keyValue)) {
+          throw new BadRequestException();
+        }
+      }
+    }
+
+    const document = await this.commentChannelModel.findOne({ key });
+    if (document) return document;
+    return await this.commentChannelModel.create({ key });
   }
 
   async listComment(

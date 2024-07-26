@@ -26,6 +26,7 @@ import { join } from 'path';
 import { IndexNowModule } from './modules/indexNow/indexNow.module';
 import { AIModule } from './modules/ai/ai.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { ResourceModule } from './modules/resource/resource.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -123,7 +124,8 @@ if (admin.apps.length === 0) {
     MapModule,
     PostModule,
     IndexNowModule,
-    AIModule
+    AIModule,
+    ResourceModule
   ],
   providers: [
     {
@@ -133,3 +135,4 @@ if (admin.apps.length === 0) {
   ]
 })
 export class AppModule {}
+
