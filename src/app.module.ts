@@ -23,10 +23,10 @@ import { MapModule } from './modules/map/map.module';
 import { PostModule } from './modules/post/post.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { IndexNowModule } from './modules/indexNow/indexNow.module';
 import { AIModule } from './modules/ai/ai.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { ResourceModule } from './modules/resource/resource.module';
+import { IndexingModule } from './modules/indexing/indexing.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -123,7 +123,7 @@ if (admin.apps.length === 0) {
     FileModule,
     MapModule,
     PostModule,
-    IndexNowModule,
+    IndexingModule,
     AIModule,
     ResourceModule
   ],
@@ -135,4 +135,3 @@ if (admin.apps.length === 0) {
   ]
 })
 export class AppModule {}
-
