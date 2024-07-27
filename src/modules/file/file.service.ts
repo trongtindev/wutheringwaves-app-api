@@ -269,8 +269,13 @@ export class FileService implements OnApplicationBootstrap {
   }
 
   async setExpire(id: Types.ObjectId, expiresIn?: Date | number) {
-    expiresIn ??= 0;
     this.logger.verbose(`setExpire(${id}) ${expiresIn}`);
+
+    if (!expiresIn || expiresIn === 0) {
+      const expires = new Date();
+      expires.setMonth(expires.getMonth() * 12 * 100);
+      expiresIn = expires;
+    }
 
     const result = await this.model.updateOne(
       {

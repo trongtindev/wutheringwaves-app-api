@@ -21,12 +21,11 @@ import { CommentModule } from './modules/comment/comment.module';
 import { FileModule } from './modules/file/file.module';
 import { MapModule } from './modules/map/map.module';
 import { PostModule } from './modules/post/post.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 import { AIModule } from './modules/ai/ai.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { ResourceModule } from './modules/resource/resource.module';
 import { IndexingModule } from './modules/indexing/indexing.module';
+import { DiscordModule } from './modules/discord/discord.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -74,9 +73,6 @@ if (admin.apps.length === 0) {
 @Module({
   imports: [
     // core modules
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public')
-    }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRoot(
@@ -125,7 +121,8 @@ if (admin.apps.length === 0) {
     PostModule,
     IndexingModule,
     AIModule,
-    ResourceModule
+    ResourceModule,
+    DiscordModule
   ],
   providers: [
     {

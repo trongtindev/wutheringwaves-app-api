@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -81,10 +82,13 @@ export class PostController {
   ) {
     const result = await this.postService.create(user._id, {
       locale: body.locale,
-      // locales: body.locales,
+      locales: body.locales,
       title: body.title,
+      titleLocalized: Object.fromEntries(body.titleLocalized),
       description: body.description,
+      descriptionLocalized: Object.fromEntries(body.descriptionLocalized),
       content: body.content,
+      contentLocalized: Object.fromEntries(body.contentLocalized),
       categories: body.categories.map((e) => {
         return new Types.ObjectId(e);
       }),
@@ -100,7 +104,63 @@ export class PostController {
 
   @Get(':slug')
   async get(@Param() param: PostSlugParamDto) {
-    const document = await this.postService.findBySlug(param.slug);
+    let document = await this.postService.findBySlug(param.slug);
+    if (!document) {
+      const id = new Types.ObjectId(param.slug);
+      document = await this.postService.get(id);
+    }
     return await this.postService.resolve(document);
   }
+
+  @Get(':id/related')
+  async listRelated(@Param() param: PostIdParamDto) {
+    const document = await this.postService.get(new Types.ObjectId(param.id));
+    const result = await this.postService.list(
+      {
+        categories: document.categories
+      },
+      {
+        filter: {
+          _id: {
+            $ne: document._id
+          }
+        }
+      }
+    );
+
+    return {
+      total: result.total,
+      items: await Promise.all(
+        result.items.map((e) => {
+          return this.postService.resolve(e);
+        })
+      )
+    };
+  }
+
+  // @Get(':id/latest')
+  // async listLatest(@Param() param: PostIdParamDto) {
+  //   const document = await this.postService.get(new Types.ObjectId(param.id));
+  //   const result = await this.postService.list(
+  //     {
+  //       categories: document.categories
+  //     },
+  //     {
+  //       filter: {
+  //         _id: {
+  //           $ne: document._id
+  //         }
+  //       }
+  //     }
+  //   );
+
+  //   return {
+  //     total: result.total,
+  //     items: await Promise.all(
+  //       result.items.map((e) => {
+  //         return this.postService.resolve(e);
+  //       })
+  //     )
+  //   };
+  // }
 }

@@ -9,7 +9,8 @@ import {
   MinLength,
   ArrayMinSize,
   ArrayMaxSize,
-  IsArray
+  IsArray,
+  ValidateNested
 } from 'class-validator';
 import striptags from 'striptags';
 import config from './post.config';
@@ -36,6 +37,11 @@ export class PostCreateBodyDto {
   @MaxLength(2)
   locale: string;
 
+  @IsLocale({ each: true })
+  @ArrayMaxSize(10)
+  @IsOptional()
+  locales: string[];
+
   @IsMongoId({ each: true })
   @IsArray()
   @ArrayMinSize(1)
@@ -49,9 +55,15 @@ export class PostCreateBodyDto {
   @Length(20, 180)
   title: string;
 
+  @ValidateNested({ each: true })
+  titleLocalized: Map<string, string>;
+
   @IsString()
   @Length(20, 300)
   description: string;
+
+  @ValidateNested({ each: true })
+  descriptionLocalized: Map<string, string>;
 
   @IsString()
   @Length(500, 20000)
@@ -59,6 +71,9 @@ export class PostCreateBodyDto {
     striptags(value, config.safeHTMLTags)
   )
   content: string;
+
+  @ValidateNested({ each: true })
+  contentLocalized: Map<string, string>;
 
   @IsMongoId({ each: true })
   @IsOptional()

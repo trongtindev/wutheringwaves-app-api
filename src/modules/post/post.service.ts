@@ -97,6 +97,7 @@ export class PostService implements OnApplicationBootstrap {
   async list(
     args: { search?: string; categories?: Types.ObjectId[] },
     options?: {
+      filter?: any;
       limit?: number;
       offset?: number;
     }
@@ -108,10 +109,10 @@ export class PostService implements OnApplicationBootstrap {
     options.limit ??= 10;
     options.offset ??= 0;
 
-    const filter: any = {};
+    const filter: any = options.filter || {};
     if (args.categories) {
       filter.categories = {
-        $in: filter.categories
+        $in: args.categories
       };
     }
 
@@ -151,7 +152,8 @@ export class PostService implements OnApplicationBootstrap {
       content: args.content,
       contentLocalized: args.contentLocalized || {},
       attachments: args.attachments,
-      thumbnail: args.thumbnail
+      thumbnail: args.thumbnail,
+      categories: args.categories
     });
 
     await this.fileService.setExpire(args.thumbnail, 0);
@@ -209,6 +211,7 @@ export class PostService implements OnApplicationBootstrap {
       user,
       slug: document.slug,
       locale: document.locale,
+      locales: document.locales,
       title,
       titleLocalized: document.titleLocalized,
       description,
@@ -219,7 +222,8 @@ export class PostService implements OnApplicationBootstrap {
       views: document.views,
       categories,
       updatedAt: document.updatedAt.toISOString(),
-      createdAt: document.createdAt.toISOString()
+      createdAt: document.createdAt.toISOString(),
+      keywords: document.keywords
     };
   }
 

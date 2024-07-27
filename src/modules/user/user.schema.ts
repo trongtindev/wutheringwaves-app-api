@@ -11,8 +11,11 @@ export class User extends Document<Types.ObjectId> {
   @Prop({ unique: true })
   email: string;
 
-  @Prop({})
-  photoUrl?: string;
+  @Prop({ required: true })
+  photoUrl: string;
+
+  @Prop()
+  discordId?: string;
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
@@ -22,3 +25,4 @@ export class User extends Document<Types.ObjectId> {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+

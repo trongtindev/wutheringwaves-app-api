@@ -8,6 +8,7 @@ export interface IPost {
   user: IUser;
   slug: string;
   locale: string;
+  locales: string[];
   title: string;
   titleLocalized: { [key: string]: string };
   description: string;
@@ -20,6 +21,7 @@ export interface IPost {
   updatedAt: string;
   createdAt: string;
   categories: IPostCategory[];
+  keywords: string;
 }
 
 export interface IPostCategory {

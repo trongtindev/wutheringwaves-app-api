@@ -50,6 +50,9 @@ export class Post extends Document<Types.ObjectId> {
   @Prop({ default: 0 })
   views: number;
 
+  @Prop({ required: true })
+  keywords: string;
+
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;
 
@@ -108,3 +111,4 @@ export class PostCategory extends Document<Types.ObjectId> {
   updatedAt: Date;
 }
 export const PostCategorySchema = SchemaFactory.createForClass(PostCategory);
+
