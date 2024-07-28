@@ -22,6 +22,7 @@ export interface IPost {
   createdAt: string;
   categories: IPostCategory[];
   keywords: string;
+  deleted: boolean;
 }
 
 export interface IPostCategory {
@@ -52,4 +53,5 @@ export interface IPostCreateArgs {
   categories: Types.ObjectId[];
 
   attachments?: Types.ObjectId[];
+  keywords: string;
 }

@@ -1,34 +1,25 @@
-## init
-FROM node:18 as build-stage
-WORKDIR /home
+# build-stage
+FROM oven/bun:1 AS build-stage
 ENV CI=1
+WORKDIR /app
 
-# setup pnpm
-RUN npm i -g pnpm
-
-# build application
+## copy source
 COPY . .
-RUN pnpm install --prefer-offline
-RUN pnpm run build
+
+## install and build
+RUN bun i --frozen-lockfile
+RUN bun run build
 
 RUN rm -rf node_modules
-RUN pnpm install --prod --ignore-scripts --prefer-offline --frozen-lockfile
-RUN npm rebuild --verbose sharp
+RUN bun i --production --ignore-scripts --prefer-offline --frozen-lockfile
 
-
-## init
-FROM node:18
+# run-stage
+FROM oven/bun:1
 ENV CI=1
-ENV NODE_ENV production
-ENV TZ=Asia/Shanghai
-WORKDIR /home
+WORKDIR /app
 
-# setup packages
-RUN npm i pm2 -g
-RUN npm i -g pnpm
+## copy dist
+COPY --from=build-stage /app  /app
 
-# copy application from build
-COPY --from=build-stage /home  /home
-
-# CMD ["pnpm", "run", "start"]
-CMD ["pm2-runtime", "/home/dist/main.js"]
+CMD ["bun", "/app/dist/main.js"]
+# CMD ["tail","-f","/dev/null"]

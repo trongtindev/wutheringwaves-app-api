@@ -39,6 +39,9 @@ export class Post extends Document<Types.ObjectId> {
   contentLocalized: { [key: string]: string };
 
   @Prop({ index: true, default: false })
+  deleted: boolean;
+
+  @Prop({ index: true, default: false })
   verified: boolean;
 
   @Prop({ default: [] })

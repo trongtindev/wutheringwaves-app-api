@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -19,6 +20,7 @@ import { IPost, IPostCategory, IPostCreateArgs } from './post.interface';
 import { FileService } from '../file/file.service';
 import urlSlug from 'url-slug';
 import { UserService } from '../user/user.service';
+import { UserDocument } from '../user/user.schema';
 
 @Injectable()
 export class PostService implements OnApplicationBootstrap {
@@ -115,6 +117,7 @@ export class PostService implements OnApplicationBootstrap {
         $in: args.categories
       };
     }
+    filter.deleted = false;
 
     const total = await this.model.countDocuments(filter);
     const items = await this.model
@@ -153,7 +156,8 @@ export class PostService implements OnApplicationBootstrap {
       contentLocalized: args.contentLocalized || {},
       attachments: args.attachments,
       thumbnail: args.thumbnail,
-      categories: args.categories
+      categories: args.categories,
+      keywords: args.keywords
     });
 
     await this.fileService.setExpire(args.thumbnail, 0);
@@ -172,7 +176,37 @@ export class PostService implements OnApplicationBootstrap {
     args: Partial<IPostCreateArgs>
   ) {}
 
-  async delete() {}
+  async delete(
+    user: Types.ObjectId | UserDocument,
+    post: Types.ObjectId | PostDocument
+  ) {
+    if (post instanceof Types.ObjectId) {
+      post = await this.get(post);
+    }
+    if (user instanceof Types.ObjectId) {
+      user = await this.userService.get(user);
+    }
+
+    if (post.user.equals(user._id) === false) {
+      const isHasRoles = await this.userService.hasRoles(user, [
+        'Moderator',
+        'Manager',
+        'Owner'
+      ]);
+      if (!isHasRoles) throw new ForbiddenException();
+    }
+
+    await this.model.updateOne(
+      {
+        _id: post._id
+      },
+      {
+        $set: {
+          deleted: true
+        }
+      }
+    );
+  }
 
   async resolve(document: PostDocument): Promise<IPost> {
     const user = await (async () => {
@@ -223,7 +257,8 @@ export class PostService implements OnApplicationBootstrap {
       categories,
       updatedAt: document.updatedAt.toISOString(),
       createdAt: document.createdAt.toISOString(),
-      keywords: document.keywords
+      keywords: document.keywords,
+      deleted: document.deleted
     };
   }
 

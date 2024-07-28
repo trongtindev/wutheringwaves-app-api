@@ -8,6 +8,7 @@ import {
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
+import { JsonWebTokenError } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -28,7 +29,14 @@ export class AuthGuard implements CanActivate {
       request.user = await this.userService.findByEmail(request.auth.email);
       if (!request.user) throw new UnauthorizedException();
     } catch (error) {
-      this.logger.verbose(error);
+      if (error instanceof JsonWebTokenError) {
+        if (error.message === 'invalid signature') {
+          this.logger.verbose(`canActivate() ${error.message}`);
+          return;
+        }
+      }
+
+      this.logger.error(error);
       throw new UnauthorizedException();
     }
 
@@ -59,7 +67,14 @@ export class AuthGuardNullable implements CanActivate {
       request.auth = await this.authService.verifyAccessToken(token);
       request.user = await this.userService.findByEmail(request.auth.email);
     } catch (error) {
-      this.logger.verbose(error);
+      if (error instanceof JsonWebTokenError) {
+        if (error.message === 'invalid signature') {
+          this.logger.verbose(`canActivate() ${error.message}`);
+          return;
+        }
+      }
+
+      this.logger.error(error);
     }
 
     return true;

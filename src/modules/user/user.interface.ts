@@ -12,6 +12,15 @@ export const userRoles = [
   'Contributor',
   'Member'
 ];
+
+export type UserRole =
+  | 'Owner'
+  | 'Manager'
+  | 'Moderator'
+  | 'Content Writer'
+  | 'Contributor'
+  | 'Member';
+
 export enum UserRoleId {
   Owner = '1249779703682826251',
   Manager = '1266784388084142150',

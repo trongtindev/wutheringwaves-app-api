@@ -16,6 +16,7 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 import { DiscordEventType } from './discord.types';
+import { assert } from 'console';
 
 @Injectable()
 export class DiscordService implements OnApplicationBootstrap {
@@ -33,6 +34,8 @@ export class DiscordService implements OnApplicationBootstrap {
 
   async initialize() {
     const { DISCORD_TOKEN, DISCORD_GUILD_ID } = process.env;
+    assert(DISCORD_TOKEN);
+    assert(DISCORD_GUILD_ID);
 
     this.client = new Client({
       intents: [

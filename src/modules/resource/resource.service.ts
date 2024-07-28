@@ -25,11 +25,12 @@ export class ResourceService implements OnApplicationBootstrap {
       baseURL: process.env.SITE_URL
     });
     axiosRetry(this.request, {
-      onRetry: (retryCount, error, config) => {
-        this.logger.warn(`onRetry( ${retryCount}) ${error} ${config.url}`);
-      },
       retries: 99,
-      retryCondition: () => true
+      onRetry: (retryCount, error, config) => {
+        this.logger.warn(`onRetry(${retryCount}) ${error} ${config.url}`);
+      },
+      retryCondition: () => true,
+      retryDelay: (count) => count * 1000
     });
   }
 

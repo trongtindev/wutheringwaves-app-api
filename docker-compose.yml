@@ -1,4 +1,29 @@
 services:
+  redis:
+    image: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS:-admin}
+
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+    volumes:
+      - ./.data/mongo:/data/db
+    command: mongod --quiet --logpath /dev/null
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongo:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-admin}
+
   api:
     build: ./
     # image: ghcr.io/trongtindev/wutheringwaves-app-api:latest
@@ -7,3 +32,6 @@ services:
       - ./tmp:/home/tmp
     ports:
       - '${PORT:-8081}:${PORT:-8081}'
+    depends_on:
+      - redis
+      - mongo

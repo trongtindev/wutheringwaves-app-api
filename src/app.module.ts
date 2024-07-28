@@ -40,18 +40,13 @@ assert(REDIS_PORT);
 assert(REDIS_USER);
 assert(REDIS_PASS);
 
-// mongodb
-const {
-  MONGODB_PROTOCOL,
-  MONGODB_HOST,
-  MONGODB_NAME,
-  MONGODB_USER,
-  MONGODB_PASS
-} = process.env;
-assert(MONGODB_HOST);
-assert(MONGODB_NAME);
-assert(MONGODB_USER);
-assert(MONGODB_PASS);
+// mongo
+const { MONGO_PROTOCOL, MONGO_HOST, MONGO_NAME, MONGO_USER, MONGO_PASS } =
+  process.env;
+assert(MONGO_HOST);
+assert(MONGO_NAME);
+assert(MONGO_USER);
+assert(MONGO_PASS);
 
 @Module({
   imports: [
@@ -59,9 +54,9 @@ assert(MONGODB_PASS);
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRoot(
-      `${MONGODB_PROTOCOL}://${MONGODB_USER}:${MONGODB_PASS}@${MONGODB_HOST}/?retryWrites=true&w=majority`,
+      `${MONGO_PROTOCOL}://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}/?retryWrites=true&w=majority`,
       {
-        dbName: MONGODB_NAME,
+        dbName: MONGO_NAME,
         autoIndex: true,
         autoCreate: true
       }

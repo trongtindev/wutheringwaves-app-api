@@ -10,10 +10,14 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
   IsArray,
-  ValidateNested
+  IsObject
 } from 'class-validator';
 import striptags from 'striptags';
-import config from './post.config';
+import config, {
+  POST_CONTENT_LENGTH,
+  POST_DESCRIPTION_LENGTH,
+  POST_TITLE_LENGTH
+} from './post.config';
 import urlSlug from 'url-slug';
 import { QueryDto } from '@/app.dto';
 
@@ -52,32 +56,36 @@ export class PostCreateBodyDto {
   thumbnail: string;
 
   @IsString()
-  @Length(20, 180)
+  @Length(POST_TITLE_LENGTH[0], POST_TITLE_LENGTH[1])
   title: string;
 
-  @ValidateNested({ each: true })
-  titleLocalized: Map<string, string>;
+  @IsObject()
+  titleLocalized: { [key: string]: string };
 
   @IsString()
-  @Length(20, 300)
+  @Length(POST_DESCRIPTION_LENGTH[0], POST_DESCRIPTION_LENGTH[1])
   description: string;
 
-  @ValidateNested({ each: true })
-  descriptionLocalized: Map<string, string>;
+  @IsObject()
+  descriptionLocalized: { [key: string]: string };
 
   @IsString()
-  @Length(500, 20000)
+  @Length(POST_CONTENT_LENGTH[0], POST_CONTENT_LENGTH[1])
   @Transform(({ value }: TransformFnParams) =>
     striptags(value, config.safeHTMLTags)
   )
   content: string;
 
-  @ValidateNested({ each: true })
-  contentLocalized: Map<string, string>;
+  @IsObject()
+  contentLocalized: { [key: string]: string };
 
   @IsMongoId({ each: true })
   @IsOptional()
   attachments: string[];
+
+  @IsString()
+  @Length(5, 500)
+  keywords: string;
 }
 
 export class PostIdParamDto {

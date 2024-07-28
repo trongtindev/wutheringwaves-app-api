@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Injectable,
   Logger,
@@ -8,9 +9,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, UserDocument } from './user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { IUser, UserRoleId, userRoles } from './user.interface';
+import { IUser, UserRole, UserRoleId, userRoles } from './user.interface';
 import { DiscordService } from '../discord/discord.service';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
 import { GuildMember } from 'discord.js';
 
 @Injectable()
@@ -72,24 +73,32 @@ export class UserService {
   }
 
   async link(user: Types.ObjectId, code: string) {
-    const decoded = await this.jwtService.verifyAsync<{
-      sub: string;
-      discordId: string;
-    }>(code, {
-      secret: process.env.AUTH_SECRET
-    });
-    if (decoded.sub !== user.toString()) {
-      throw new BadRequestException('user_mismatch');
-    }
-
-    await this.userModel.updateOne(
-      { _id: user },
-      {
-        $set: {
-          discordId: decoded.discordId
-        }
+    try {
+      const decoded = await this.jwtService.verifyAsync<{
+        sub: string;
+        discordId: string;
+      }>(code, {
+        secret: process.env.AUTH_SECRET
+      });
+      if (decoded.sub !== user.toString()) {
+        throw new BadRequestException('user_mismatch');
       }
-    );
+
+      await this.userModel.updateOne(
+        { _id: user },
+        {
+          $set: {
+            discordId: decoded.discordId
+          }
+        }
+      );
+    } catch (error) {
+      if (error instanceof JsonWebTokenError) {
+        throw new BadRequestException(error.message);
+      }
+
+      throw new BadGatewayException(error.message);
+    }
   }
 
   async unlink(user: Types.ObjectId) {
@@ -108,7 +117,13 @@ export class UserService {
     options?: {
       refresh?: boolean;
     }
-  ) {
+  ): Promise<
+    | {
+        role: UserRole;
+        status: boolean;
+      }[]
+    | null
+  > {
     options ??= {};
     if (user instanceof Types.ObjectId) {
       user = await this.get(user);
@@ -133,9 +148,34 @@ export class UserService {
     return userRoles.map((e) => {
       const roleId = UserRoleId[e];
       return {
-        role: e,
+        role: e as UserRole,
         status: member.roles.cache.has(roleId)
       };
+    });
+  }
+
+  async hasRoles(
+    user: Types.ObjectId | UserDocument,
+    roles: UserRole[],
+    type: 'all' | 'any' = 'any'
+  ) {
+    if (user instanceof Types.ObjectId) {
+      user = await this.get(user);
+    }
+
+    const userRoles = await this.listRoles(user);
+    if (userRoles) return false;
+
+    if (type === 'any') {
+      return (
+        roles.findIndex((e) => {
+          return userRoles.find((role) => role.role === e);
+        }) >= 0
+      );
+    }
+
+    return roles.every((e) => {
+      return userRoles.find((role) => role.role === e);
     });
   }
 }

@@ -62,6 +62,10 @@ export class CommentService {
       }
 
       const [keyName, keyValue] = key.split('.');
+      if (!keyName || !keyValue) {
+        throw new BadRequestException();
+      }
+
       if (keyName === 'character') {
         if (!this.resourceService.characters.find((e) => e.slug === keyValue)) {
           throw new BadRequestException();

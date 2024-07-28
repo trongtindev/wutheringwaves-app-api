@@ -22,14 +22,11 @@ import dayjs from 'dayjs';
 import fs from 'fs';
 import path from 'path';
 import { ResourceService } from '../resource/resource.service';
+import { timeOffsetIds } from './convene.config';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
   private logger = new Logger(ConveneService.name);
-  private timeOffset: {
-    timeOffset: { [key: string]: number };
-    timeOffsetIds: { [key: string]: number };
-  };
   private tempData = path.resolve('./', '.tmp');
 
   constructor(
@@ -42,18 +39,23 @@ export class ConveneService implements OnApplicationBootstrap {
     private resourceService: ResourceService
   ) {}
 
-  async onApplicationBootstrap() {
+  onApplicationBootstrap() {
     const api = axios.create({
       baseURL: process.env.SITE_URL
     });
-    if (process.env.NODE_ENV !== 'development') axiosRetry(api);
+    axiosRetry(api, {
+      retries: 99,
+      onRetry: (retryCount, error, config) => {
+        this.logger.warn(`onRetry(${retryCount}) ${error} ${config.url}`);
+      },
+      retryCondition: () => true,
+      retryDelay: (count) => count * 1000
+    });
 
-    const loadTimeOffset = async () => {
-      const timeOffset = await api.get('/api/getTimeOffset');
-      this.timeOffset = timeOffset.data;
-    };
-    await Promise.all([loadTimeOffset()]);
+    // this.initialize();
+  }
 
+  async initialize() {
     // start global calculate
     if (process.env.NODE_ENV === 'development') {
       this.globalStatsCalculate();
@@ -336,7 +338,7 @@ export class ConveneService implements OnApplicationBootstrap {
 
       for (const element of stores) {
         const rcData: { [key: string]: number } = {};
-        const timeOffset = this.timeOffset.timeOffsetIds[element.serverId];
+        const timeOffset = timeOffsetIds[element.serverId];
         const totalFiveStar: { [key: string]: number } = {};
         const totalFourStar: { [key: string]: number } = {};
         const totalFiveStarWin: { [key: string]: number } = {};

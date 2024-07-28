@@ -7,3 +7,4 @@ cache
 pnpm-lock.yaml
 proxies.txt
 .tmp
+.data

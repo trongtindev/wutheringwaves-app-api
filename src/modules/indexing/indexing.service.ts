@@ -28,7 +28,7 @@ export class IndexingService implements OnApplicationBootstrap {
     @InjectModel(IndexingUrl.name)
     private urlModel: Model<IndexingUrl>
   ) {
-    const key = JSON.parse(process.env.FIREBASE_ACCOUNT_KEY);
+    const key = JSON.parse(process.env.GOOGLE_ACCOUNT_KEY);
     const jwtClient = new google.auth.JWT(
       key.client_email,
       null,

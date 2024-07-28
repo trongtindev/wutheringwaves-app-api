@@ -4,7 +4,6 @@ declare global {
     // eslint-disable-next-line no-unused-vars
     interface ProcessEnv {
       readonly NODE_ENV: 'production' | 'development';
-      readonly TZ: string;
       readonly PORT: string;
       readonly SITE_URL: string;
       readonly MASTER_TOKEN: string;
@@ -14,11 +13,13 @@ declare global {
       readonly REDIS_USER: string;
       readonly REDIS_PASS: string;
 
-      readonly MONGODB_PROTOCOL: string;
-      readonly MONGODB_HOST: string;
-      readonly MONGODB_NAME: string;
-      readonly MONGODB_USER: string;
-      readonly MONGODB_PASS: string;
+      readonly MONGO_PROTOCOL: string;
+      readonly MONGO_HOST: string;
+      readonly MONGO_NAME: string;
+      readonly MONGO_USER: string;
+      readonly MONGO_PASS: string;
+
+      readonly GOOGLE_ACCOUNT_KEY: string;
     }
   }
 }
