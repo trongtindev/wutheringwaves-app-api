@@ -8,7 +8,6 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import session from 'express-session';
 
 async function bootstrap() {
   dayjs.extend(utc);
@@ -29,13 +28,6 @@ async function bootstrap() {
   app.useGlobalGuards(new AppGuard());
   app.useGlobalPipes(new ValidationPipe());
   app.set('trust proxy', 1);
-  app.use(
-    session({
-      secret: process.env.AUTH_SECRET,
-      resave: false,
-      saveUninitialized: false
-    })
-  );
 
   await app.listen(process.env.PORT);
   console.log(`Local: http://localhost:${process.env.PORT}.`);

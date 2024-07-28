@@ -37,7 +37,7 @@ export class SyncController {
 
   @Throttle({
     'sync.push': {
-      limit: 30,
+      limit: 15,
       ttl: 60000
     }
   })
@@ -52,9 +52,15 @@ export class SyncController {
     });
   }
 
+  @Throttle({
+    'sync.erase': {
+      limit: 3,
+      ttl: 60000
+    }
+  })
   @UseGuards(AuthGuard)
   @Delete()
-  async eraseAll(@UserDecorator() user: UserDocument) {
+  async erase(@UserDecorator() user: UserDocument) {
     return await this.syncService.eraseAll(user._id);
   }
 }

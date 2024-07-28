@@ -1,6 +1,5 @@
 import assert from 'assert';
 import dotenv from 'dotenv';
-import * as admin from 'firebase-admin';
 
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
@@ -53,22 +52,6 @@ assert(MONGODB_HOST);
 assert(MONGODB_NAME);
 assert(MONGODB_USER);
 assert(MONGODB_PASS);
-
-// firebase
-const { FIREBASE_ACCOUNT_KEY, FIREBASE_DATABASE_URL, FIREBASE_STORAGE_BUCKET } =
-  process.env;
-assert(FIREBASE_ACCOUNT_KEY);
-assert(FIREBASE_DATABASE_URL);
-assert(FIREBASE_STORAGE_BUCKET);
-
-if (admin.apps.length === 0) {
-  const serviceAccount = JSON.parse(FIREBASE_ACCOUNT_KEY);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: FIREBASE_DATABASE_URL,
-    storageBucket: FIREBASE_STORAGE_BUCKET
-  });
-}
 
 @Module({
   imports: [

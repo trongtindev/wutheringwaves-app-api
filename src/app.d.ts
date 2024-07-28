@@ -19,10 +19,6 @@ declare global {
       readonly MONGODB_NAME: string;
       readonly MONGODB_USER: string;
       readonly MONGODB_PASS: string;
-
-      readonly FIREBASE_ACCOUNT_KEY: string;
-      readonly FIREBASE_DATABASE_URL: string;
-      readonly FIREBASE_STORAGE_BUCKET: string;
     }
   }
 }

@@ -1,14 +1,53 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  GetObjectCommand,
+  S3Client,
+  S3ServiceException,
+  PutObjectCommand,
+  DeleteObjectCommand
+} from '@aws-sdk/client-s3';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import * as admin from 'firebase-admin';
+import { assert } from 'console';
 import { Types } from 'mongoose';
 
 @Injectable()
-export class SyncService {
+export class SyncService implements OnApplicationBootstrap {
   private logger = new Logger(SyncService.name);
-  private path = process.env.SYNC_PATH;
+  private client: S3Client;
 
   constructor(private eventEmitter: EventEmitter2) {}
+
+  onApplicationBootstrap() {
+    const {
+      SYNC_S3_PATH,
+      SYNC_S3_ENDPOINT,
+      SYNC_S3_REGION,
+      SYNC_S3_BUCKET,
+      SYNC_S3_ACCESS_KEY_ID,
+      SYNC_S3_SECRET_ACCESS_KEY
+    } = process.env;
+    assert(SYNC_S3_PATH);
+    assert(SYNC_S3_ENDPOINT);
+    assert(SYNC_S3_REGION);
+    assert(SYNC_S3_BUCKET);
+    assert(SYNC_S3_ACCESS_KEY_ID);
+    assert(SYNC_S3_SECRET_ACCESS_KEY);
+
+    this.client = new S3Client({
+      region: SYNC_S3_REGION,
+      credentials: {
+        accessKeyId: SYNC_S3_ACCESS_KEY_ID,
+        secretAccessKey: SYNC_S3_SECRET_ACCESS_KEY
+      },
+      endpoint: SYNC_S3_ENDPOINT
+    });
+  }
 
   async pull(
     user: Types.ObjectId,
@@ -21,35 +60,34 @@ export class SyncService {
 
     options ??= {};
 
-    const [exists] = await admin
-      .storage()
-      .bucket()
-      .file(`${this.path}/${key}.json`)
-      .exists();
-
-    if (exists) {
-      const [file] = await admin
-        .storage()
-        .bucket()
-        .file(`${this.path}/${key}.json`)
-        .get();
+    try {
+      const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
+      const command = new GetObjectCommand({
+        Key: `${SYNC_S3_PATH}/${key}.json`,
+        Bucket: SYNC_S3_BUCKET
+      });
+      const result = await this.client.send(command);
 
       return {
-        data: await (async () => {
-          if (options.withData) {
-            const json = await file.download();
-            return JSON.parse(Buffer.from(json[0]).toString('utf-8'));
-          }
-        })(),
-        size: file.metadata.size,
-        createdAt: file.metadata.timeCreated
+        size: result.ContentLength || 0,
+        content: options.withData
+          ? await result.Body.transformToString()
+          : undefined,
+        createdAt: result.LastModified || new Date()
       };
-    }
+    } catch (error) {
+      if (error instanceof S3ServiceException) {
+        if (error.$metadata.httpStatusCode === 404) {
+          return {
+            size: 0,
+            createdAt: 0
+          };
+        }
+      }
 
-    return {
-      size: 0,
-      createdAt: 0
-    };
+      this.logger.error(error);
+      throw new BadGatewayException(error.message);
+    }
   }
 
   async push(
@@ -64,17 +102,26 @@ export class SyncService {
     const json = JSON.parse(args.data);
     if (!json) throw new BadRequestException('json is required');
     if (!json.collections) throw new BadRequestException('invalid data');
-    if (typeof json.instanceToken !== 'string')
+    if (typeof json.instanceToken !== 'string') {
       throw new BadRequestException('invalid data');
-    if (typeof json.name !== 'string')
+    }
+    if (typeof json.name !== 'string') {
       throw new BadRequestException('invalid data');
+    }
 
-    await admin
-      .storage()
-      .bucket()
-      .file(`${this.path}/${key}.json`)
-      .save(JSON.stringify(json));
-    this.logger.verbose(`put(${key}) done! ${args.data.length}`);
+    try {
+      const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
+      const command = new PutObjectCommand({
+        Key: `${SYNC_S3_PATH}/${key}.json`,
+        Body: JSON.stringify(json),
+        Bucket: SYNC_S3_BUCKET,
+        ACL: 'private'
+      });
+      await this.client.send(command);
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadGatewayException(error.message);
+    }
 
     return await this.pull(user);
   }
@@ -83,14 +130,16 @@ export class SyncService {
     const key = user.toString();
     this.logger.verbose(`eraseAll(${key})`);
 
-    const [file] = await admin
-      .storage()
-      .bucket()
-      .file(`${this.path}/${key}.json`)
-      .get({ autoCreate: false });
-
-    if (await file.exists()) {
-      await file.delete();
+    try {
+      const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
+      const command = new DeleteObjectCommand({
+        Key: `${SYNC_S3_PATH}/${key}.json`,
+        Bucket: SYNC_S3_BUCKET
+      });
+      await this.client.send(command);
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadGatewayException(error.message);
     }
   }
 }

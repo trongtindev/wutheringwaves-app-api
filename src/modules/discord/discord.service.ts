@@ -38,6 +38,9 @@ export class DiscordService implements OnApplicationBootstrap {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessagePolls,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages
       ],
@@ -72,7 +75,9 @@ export class DiscordService implements OnApplicationBootstrap {
     // commands.setName('verify').setDescription('Verify web account.');
   }
 
-  async verify() {}
+  get user() {
+    return this.client.user;
+  }
 
   // async sendMessage() {}
 

@@ -25,4 +25,3 @@ export class User extends Document<Types.ObjectId> {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-

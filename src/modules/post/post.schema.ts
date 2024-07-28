@@ -111,4 +111,3 @@ export class PostCategory extends Document<Types.ObjectId> {
   updatedAt: Date;
 }
 export const PostCategorySchema = SchemaFactory.createForClass(PostCategory);
-

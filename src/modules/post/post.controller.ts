@@ -2,7 +2,8 @@ import {
   Body,
   Controller,
   Get,
-  NotFoundException,
+  Inject,
+  Ip,
   Param,
   Post,
   Query,
@@ -19,12 +20,15 @@ import {
 import { Types } from 'mongoose';
 import { UserDocument } from '../user/user.schema';
 import { AuthGuard } from '../auth/auth.guard';
-import { CacheTTL } from '@nestjs/cache-manager';
+import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import { UserDecorator } from '../user/user.decorator';
 
 @Controller('posts')
 export class PostController {
-  constructor(private postService: PostService) {}
+  constructor(
+    private postService: PostService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
 
   @Get()
   async list(@Query() query: PostListQueryDto) {
@@ -47,17 +51,14 @@ export class PostController {
   }
 
   @Post(':id/views')
-  async increaseViews(
-    @Param() param: PostIdParamDto,
-    @Session() session: Record<string, any>
-  ) {
-    if (session[param.id]) {
-      return;
-    }
-    session[param.id] = 1;
+  async increaseViews(@Param() param: PostIdParamDto, @Ip() ip: string) {
+    const key = `${ip}-${param.id}`;
+    const session = await this.cacheManager.get(key);
+    if (session) return;
 
     const id = new Types.ObjectId(param.id);
     await this.postService.increaseViews(id, 1);
+    await this.cacheManager.set(key, true, 60 * 15 * 1000);
   }
 
   @CacheTTL(60 * 60 * 3)
