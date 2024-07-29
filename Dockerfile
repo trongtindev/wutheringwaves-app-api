@@ -1,5 +1,5 @@
 # build-stage
-FROM oven/bun:1 AS build-stage
+FROM node:18 AS build-stage
 ENV CI=1
 WORKDIR /app
 
@@ -7,19 +7,20 @@ WORKDIR /app
 COPY . .
 
 ## install and build
-RUN bun i --frozen-lockfile
-RUN bun run build
+RUN npm i pnpm -g
+RUN pnpm i --frozen-lockfile
+RUN pnpm run build
 
 RUN rm -rf node_modules
-RUN bun i --production --ignore-scripts --prefer-offline --frozen-lockfile
+RUN pnpm i --production --ignore-scripts --prefer-offline --frozen-lockfile
 
 # run-stage
-FROM oven/bun:1
+FROM node:18
 ENV CI=1
 WORKDIR /app
 
 ## copy dist
 COPY --from=build-stage /app  /app
 
-CMD ["bun", "/app/dist/main.js"]
+CMD ["node", "/app/dist/main.js"]
 # CMD ["tail","-f","/dev/null"]

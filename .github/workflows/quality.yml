@@ -18,14 +18,14 @@ jobs:
       - uses: actions/cache@v4
         name: Setup cache
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lockb') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: bun run typecheck
-        run: bun run typecheck
+      - name: pnpm run typecheck
+        run: pnpm run typecheck
 
-      - name: bun run lint
-        run: bun run lint
+      - name: pnpm run lint
+        run: pnpm run lint
