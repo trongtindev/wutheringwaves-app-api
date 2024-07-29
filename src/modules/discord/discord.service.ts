@@ -29,10 +29,7 @@ export class DiscordService implements OnApplicationBootstrap {
 
   onApplicationBootstrap() {
     this.logger.verbose(`onApplicationBootstrap()`);
-    this.initialize().catch((error) => this.logger.error(error));
-  }
 
-  async initialize() {
     const { DISCORD_TOKEN, DISCORD_GUILD_ID } = process.env;
     assert(DISCORD_TOKEN);
     assert(DISCORD_GUILD_ID);
@@ -67,6 +64,12 @@ export class DiscordService implements OnApplicationBootstrap {
       this.logger.error(error);
     });
 
+    this.initialize().catch((error) => this.logger.error(error));
+  }
+
+  async initialize() {
+    const { DISCORD_TOKEN, DISCORD_GUILD_ID } = process.env;
+
     this.logger.log(`initialize() login...`);
     await this.client.login(DISCORD_TOKEN);
 
@@ -81,8 +84,6 @@ export class DiscordService implements OnApplicationBootstrap {
   get user() {
     return this.client.user;
   }
-
-  // async sendMessage() {}
 
   async registerCommand(commands: SlashCommandBuilder[]) {
     const { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } = process.env;

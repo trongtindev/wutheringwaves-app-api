@@ -32,6 +32,7 @@ import {
   POST_DESCRIPTION_LENGTH,
   POST_TITLE_LENGTH
 } from './post.config';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('posts')
 export class PostController {
@@ -85,6 +86,12 @@ export class PostController {
     };
   }
 
+  @Throttle({
+    'post.create': {
+      ttl: 60000 * 30,
+      limit: 10
+    }
+  })
   @UseGuards(AuthGuard)
   @Post()
   async create(

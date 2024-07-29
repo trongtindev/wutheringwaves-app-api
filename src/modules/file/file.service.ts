@@ -10,8 +10,7 @@ import {
   DeleteObjectCommand,
   PutObjectCommand,
   PutObjectAclCommand,
-  S3Client,
-  ListBucketsCommand
+  S3Client
 } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import assert from 'assert';
@@ -36,6 +35,8 @@ export class FileService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    this.logger.verbose(`onApplicationBootstrap()`);
+
     const {
       FILE_S3_ENDPOINT,
       FILE_S3_PATH,
@@ -60,16 +61,6 @@ export class FileService implements OnApplicationBootstrap {
       },
       endpoint: FILE_S3_ENDPOINT
     });
-
-    if (process.env.NODE_ENV === 'development') {
-      this.verify();
-    } else {
-      await this.verify();
-    }
-  }
-
-  private async verify() {
-    await this.client.send(new ListBucketsCommand());
   }
 
   private async putObject(
