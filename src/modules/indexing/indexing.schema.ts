@@ -17,9 +17,6 @@ export class IndexingUrl extends Document<Types.ObjectId> {
   @Prop({ default: () => new Date(0), index: true })
   googleSubmittedAt: Date;
 
-  @Prop({ default: () => new Date(0), index: true })
-  googleResubmittedAt: Date;
-
   @Prop({ default: () => new Date(0), index: true, required: true })
   lastModified: Date;
 

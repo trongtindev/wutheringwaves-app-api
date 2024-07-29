@@ -10,11 +10,6 @@ export class IndexingEvents {
   @OnEvent(IndexingEventType.urlsUpdated)
   async onUrlsUpdated() {
     this.indexingService.nowSubmitUrls();
-    this.indexingService.googleCheckSubmitted();
-  }
-
-  @OnEvent(IndexingEventType.googleUrlsChecked)
-  async onGoogleUrlsChecked() {
     this.indexingService.googleSubmitUrls();
   }
 }

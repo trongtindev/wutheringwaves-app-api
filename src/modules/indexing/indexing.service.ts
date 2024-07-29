@@ -11,7 +11,6 @@ import { XMLParser } from 'fast-xml-parser';
 import { IndexingUrl, IndexingUrlDocument } from './indexing.schema';
 import { IndexingEventType } from './indexing.types';
 import { Credentials } from 'google-auth-library';
-import { IIndexingGoogleStatus } from './indexing.interface';
 
 @Injectable()
 export class IndexingService implements OnApplicationBootstrap {
@@ -203,68 +202,6 @@ export class IndexingService implements OnApplicationBootstrap {
     }
   }
 
-  async googleCheckSubmitted() {
-    this.logger.log(`googleCheckSubmitted()...`);
-    const urls = await this.urlModel
-      .find({ googleSubmitted: false })
-      .limit(this.testMode ? 1 : 100);
-    const worker = new Bottleneck({ maxConcurrent: 3 });
-
-    await Promise.all(
-      urls.map((doc) => {
-        return worker.schedule(async () => {
-          if (
-            this.googleCheckSubmittedNextTime &&
-            this.googleCheckSubmittedNextTime > new Date()
-          ) {
-            return;
-          }
-
-          const result = await this.googleapis.get<IIndexingGoogleStatus>(
-            'urlNotifications/metadata',
-            {
-              params: {
-                url: doc.url
-              },
-              validateStatus: () => true
-            }
-          );
-
-          if (result.status === 429) {
-            this.logger.log(`googleCheckSubmitted()...  429`);
-            const nextTime = new Date();
-            nextTime.setHours(nextTime.getHours() + 1);
-            this.googleCheckSubmittedNextTime = nextTime;
-            return;
-          }
-
-          if (result.status === 200) {
-            this.logger.log(`googleCheckSubmitted()... ${doc.url} => OK`);
-            await this.urlModel.updateOne(
-              {
-                _id: doc._id
-              },
-              {
-                $set: {
-                  googleSubmitted: true
-                }
-              }
-            );
-            return;
-          } else if (result.status === 404) {
-            this.logger.log(`googleCheckSubmitted()... ${doc.url} => None`);
-          }
-
-          this.logger.log(
-            `googleCheckSubmitted()... ${doc.url} => ${result.status}`
-          );
-        });
-      })
-    );
-
-    this.eventEmitter.emit(IndexingEventType.googleUrlsChecked);
-  }
-
   async googleSubmitUrl(
     doc: IndexingUrlDocument,
     onDone?: () => Promise<void> | void
@@ -314,36 +251,15 @@ export class IndexingService implements OnApplicationBootstrap {
     this.logger.log(`googleSubmitUrls()...`);
 
     const docs = await this.urlModel
-      .find({ googleSubmitted: false })
-      .limit(this.testMode ? 1 : 100);
-    const worker = new Bottleneck({ maxConcurrent: 3 });
-
-    await Promise.all(
-      docs.map((doc) => {
-        return worker.schedule(() => {
-          return this.googleSubmitUrl(doc);
-        });
-      })
-    );
-
-    this.logger.log(`googleSubmitUrls() done (${docs.length})`);
-  }
-
-  async googleResubmitUrls() {
-    if (this.googleSubmitNextTime > new Date()) {
-      this.logger.warn(`googleResubmitUrls()... skip 429`);
-      return;
-    }
-    this.logger.log(`googleResubmitUrls()...`);
-
-    const docs = await this.urlModel
       .find({
-        googleSubmitted: true,
         $expr: {
-          $gte: ['$lastModified', '$googleResubmittedAt']
+          $gte: ['$lastModified', '$googleSubmittedAt']
         }
       })
-      .limit(this.testMode ? 1 : 100);
+      .limit(this.testMode ? 1 : 100)
+      .sort({
+        lastModified: 'desc'
+      });
     const worker = new Bottleneck({ maxConcurrent: 3 });
 
     await Promise.all(
@@ -356,7 +272,7 @@ export class IndexingService implements OnApplicationBootstrap {
               },
               {
                 $set: {
-                  googleResubmittedAt: new Date()
+                  googleSubmittedAt: new Date()
                 }
               }
             );
@@ -365,6 +281,6 @@ export class IndexingService implements OnApplicationBootstrap {
       })
     );
 
-    this.logger.log(`googleResubmitUrls() done (${docs.length})`);
+    this.logger.log(`googleSubmitUrls() done (${docs.length})`);
   }
 }
