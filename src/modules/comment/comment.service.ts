@@ -187,7 +187,7 @@ export class CommentService {
     // TODO: maybe move to events
     if (args.attachments) {
       args.attachments.forEach((e) => {
-        this.fileService.setExpire(e, 0);
+        this.fileService.setExpire(e, -1);
       });
     }
 

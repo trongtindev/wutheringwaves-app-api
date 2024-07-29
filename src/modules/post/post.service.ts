@@ -21,6 +21,8 @@ import { FileService } from '../file/file.service';
 import urlSlug from 'url-slug';
 import { UserService } from '../user/user.service';
 import { UserDocument } from '../user/user.schema';
+import { compareObject, renderExportContent } from './post.utils';
+import { isImage } from '../file/file.utils';
 
 @Injectable()
 export class PostService implements OnApplicationBootstrap {
@@ -118,6 +120,9 @@ export class PostService implements OnApplicationBootstrap {
       };
     }
     filter.deleted = false;
+    filter.createdAt = {
+      $lte: new Date()
+    };
 
     const total = await this.model.countDocuments(filter);
     const items = await this.model
@@ -133,13 +138,8 @@ export class PostService implements OnApplicationBootstrap {
 
   async create(
     user: Types.ObjectId,
-    args: IPostCreateArgs,
-    options?: {
-      createdAt?: Date;
-    }
+    args: IPostCreateArgs
   ): Promise<PostDocument> {
-    options ??= {};
-
     const exists = await this.model.findOne({ title: args.title });
     if (exists) throw new BadRequestException();
 
@@ -157,13 +157,20 @@ export class PostService implements OnApplicationBootstrap {
       attachments: args.attachments,
       thumbnail: args.thumbnail,
       categories: args.categories,
-      keywords: args.keywords
+      keywords: args.keywords,
+      createdAt: args.schedule || new Date()
     });
 
-    await this.fileService.setExpire(args.thumbnail, 0);
+    // check thumbnail
+    const thumbnail = await this.fileService.get(args.thumbnail);
+    if (!isImage(thumbnail.type)) {
+      throw new BadRequestException('invalid-thumbnail');
+    }
+    await this.fileService.setExpire(args.thumbnail, -1);
+
     await Promise.all(
       args.attachments.map(async (e) => {
-        return await this.fileService.setExpire(e, 0);
+        return await this.fileService.setExpire(e, -1);
       })
     );
 
@@ -171,10 +178,119 @@ export class PostService implements OnApplicationBootstrap {
   }
 
   async update(
-    user: Types.ObjectId,
-    post: Types.ObjectId,
-    args: Partial<IPostCreateArgs>
-  ) {}
+    user: Types.ObjectId | UserDocument,
+    post: Types.ObjectId | PostDocument,
+    args: IPostCreateArgs
+  ) {
+    if (post instanceof Types.ObjectId) {
+      post = await this.get(post);
+    }
+    if (user instanceof Types.ObjectId) {
+      user = await this.userService.get(user);
+    }
+
+    // check thumbnail
+    const thumbnail = await this.fileService.get(args.thumbnail);
+    if (!isImage(thumbnail.type)) {
+      throw new BadRequestException('invalid-thumbnail');
+    }
+
+    // create revision
+    const changes: any = {};
+
+    if (post.title !== args.title) {
+      changes.title = post.title;
+    }
+    if (!compareObject(post.titleLocalized, args.titleLocalized)) {
+      changes.titleLocalized = post.titleLocalized;
+    }
+
+    if (post.description !== args.description) {
+      changes.description = post.description;
+    }
+    if (!compareObject(post.descriptionLocalized, args.descriptionLocalized)) {
+      changes.descriptionLocalized = post.descriptionLocalized;
+    }
+
+    if (post.content !== args.content) {
+      changes.content = post.content;
+    }
+    if (!compareObject(post.contentLocalized, args.contentLocalized)) {
+      changes.contentLocalized = post.contentLocalized;
+    }
+
+    if (post.locale !== args.locale) {
+      changes.locale = post.locale;
+    }
+    if (post.locales !== args.locales) {
+      changes.locales = post.locales;
+    }
+    if (post.categories !== args.categories) {
+      changes.categories = post.categories;
+    }
+    if (post.keywords !== args.keywords) {
+      changes.keywords = post.keywords;
+    }
+
+    await this.revisionModel.create({
+      post: post._id,
+      user: user._id,
+      changes
+    });
+
+    // update this post
+    await this.model.updateOne(
+      {
+        _id: post._id
+      },
+      {
+        $set: {
+          title: args.title,
+          titleLocalized: args.titleLocalized,
+          description: args.description,
+          descriptionLocalized: args.descriptionLocalized,
+          content: args.content,
+          contentLocalized: args.contentLocalized,
+          categories: args.categories,
+          keywords: args.keywords,
+          thumbnail: args.thumbnail,
+          attachments: args.attachments,
+          createdAt: args.schedule || post.createdAt
+        }
+      }
+    );
+
+    // delete old thumbnail
+    if (!args.thumbnail.equals(post.thumbnail)) {
+      this.fileService.setExpire(post.thumbnail, 0);
+    }
+
+    // update expiry attachments
+    const unused = post.attachments.filter((e) => {
+      return (
+        args.attachments.findIndex((attachment) => {
+          return e.equals(attachment);
+        }) < 0
+      );
+    });
+    const added = args.attachments.filter((e) => {
+      return (
+        post.attachments.findIndex((attachment) => {
+          return e.equals(attachment);
+        }) < 0
+      );
+    });
+    Promise.all(
+      unused.map(async (e) => {
+        return await this.fileService.setExpire(e, 0);
+      })
+    );
+    Promise.all(
+      added.map(async (e) => {
+        return await this.fileService.setExpire(e, -1);
+      })
+    );
+  }
 
   async delete(
     user: Types.ObjectId | UserDocument,
@@ -250,8 +366,8 @@ export class PostService implements OnApplicationBootstrap {
       titleLocalized: document.titleLocalized,
       description,
       descriptionLocalized: document.descriptionLocalized,
+      content: renderExportContent(content),
       contentLocalized: document.contentLocalized,
-      content,
       thumbnail,
       views: document.views,
       categories,

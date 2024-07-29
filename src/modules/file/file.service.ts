@@ -15,7 +15,7 @@ import {
 import * as fs from 'fs';
 import assert from 'assert';
 import { File, FileDocument } from './file.schema';
-import { IFile, IFileUploadedEventArgs } from './file.interface';
+import { IFile, IFileMetadata, IFileUploadedEventArgs } from './file.interface';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserDocument } from '../user/user.schema';
@@ -23,6 +23,8 @@ import { MemoryStoredFile } from 'nestjs-form-data';
 import { createId } from '@paralleldrive/cuid2';
 import { FileEventType } from './file.types';
 import Bottleneck from 'bottleneck';
+import sharp from 'sharp';
+import { isImage } from './file.utils';
 
 @Injectable()
 export class FileService implements OnApplicationBootstrap {
@@ -97,23 +99,6 @@ export class FileService implements OnApplicationBootstrap {
     );
   }
 
-  private async putObjectAclCommand(
-    key: string,
-    params?: {
-      ACL?: 'private' | 'public-read';
-      client?: S3Client;
-      bucket?: string;
-    }
-  ) {
-    const client = params.client ?? this.client;
-    const command = new PutObjectAclCommand({
-      Key: key,
-      Bucket: params.bucket,
-      ACL: params.ACL
-    });
-    return await client.send(command);
-  }
-
   async resolve(file: FileDocument): Promise<IFile> {
     const { FILE_S3_CDN, FILE_S3_ENDPOINT } = process.env;
 
@@ -149,6 +134,15 @@ export class FileService implements OnApplicationBootstrap {
     const fileName = `${createId()}.${memoryStoredFile.extension}`;
     const objectKey = `${filePath}/${fileName}`;
 
+    // get metadata
+    let metadata: IFileMetadata | null = null;
+    if (isImage(memoryStoredFile.mimetype)) {
+      const imageMetadata = await sharp(memoryStoredFile.buffer).metadata();
+      metadata = {};
+      metadata.width = imageMetadata.width;
+      metadata.height = imageMetadata.height;
+    }
+
     // upload to cloud
     await this.putObject(objectKey, memoryStoredFile.buffer);
 
@@ -158,7 +152,8 @@ export class FileService implements OnApplicationBootstrap {
       path: filePath,
       name: fileName,
       size: memoryStoredFile.size,
-      type: memoryStoredFile.mimetype
+      type: memoryStoredFile.mimetype,
+      metadata
     });
     const document = await this.get(result.id);
 
@@ -262,7 +257,7 @@ export class FileService implements OnApplicationBootstrap {
   async setExpire(id: Types.ObjectId, expiresIn?: Date | number) {
     this.logger.verbose(`setExpire(${id}) ${expiresIn}`);
 
-    if (!expiresIn || expiresIn === 0) {
+    if (!expiresIn || expiresIn === -1) {
       const expires = new Date();
       expires.setMonth(expires.getMonth() * 12 * 100);
       expiresIn = expires;

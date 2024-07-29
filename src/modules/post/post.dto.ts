@@ -1,4 +1,4 @@
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
   IsLocale,
   IsMongoId,
@@ -10,7 +10,9 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
   IsArray,
-  IsObject
+  IsObject,
+  IsDateString,
+  IsDate
 } from 'class-validator';
 import striptags from 'striptags';
 import config, {
@@ -79,13 +81,14 @@ export class PostCreateBodyDto {
   @IsObject()
   contentLocalized: { [key: string]: string };
 
-  @IsMongoId({ each: true })
-  @IsOptional()
-  attachments: string[];
-
   @IsString()
   @Length(5, 500)
   keywords: string;
+
+  @IsDate()
+  @Type(() => Date)
+  @IsOptional()
+  schedule: string;
 }
 
 export class PostIdParamDto {

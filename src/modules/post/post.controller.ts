@@ -10,7 +10,6 @@ import {
   Param,
   Post,
   Query,
-  Session,
   UseGuards
 } from '@nestjs/common';
 import { PostService } from './post.service';
@@ -25,14 +24,13 @@ import { UserDocument } from '../user/user.schema';
 import { AuthGuard } from '../auth/auth.guard';
 import { Cache, CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import { UserDecorator } from '../user/user.decorator';
-import { isLocale } from 'validator';
-import { isString, length } from 'class-validator';
-import {
-  POST_CONTENT_LENGTH,
-  POST_DESCRIPTION_LENGTH,
-  POST_TITLE_LENGTH
-} from './post.config';
 import { Throttle } from '@nestjs/throttler';
+import {
+  extractAttachments,
+  validatorContentLocalized,
+  validatorDescriptionLocalized,
+  validatorTitleLocalized
+} from './post.utils';
 
 @Controller('posts')
 export class PostController {
@@ -101,61 +99,32 @@ export class PostController {
     // titleLocalized
     if (!body.titleLocalized) throw new BadRequestException();
     for (const locale of Object.keys(body.titleLocalized)) {
-      if (!isLocale(locale) || !body.locales.includes(locale)) {
-        throw new BadRequestException('invalid_localized_title');
-      }
-      if (!isString(body.titleLocalized[locale])) {
-        throw new BadRequestException('invalid_localized_title');
-      }
-      if (
-        !length(
-          body.titleLocalized[locale],
-          POST_TITLE_LENGTH[0],
-          POST_TITLE_LENGTH[1]
-        )
-      ) {
-        throw new BadRequestException('invalid_localized_title_length');
-      }
+      validatorTitleLocalized(locale, body.locales, body.titleLocalized);
     }
 
     // descriptionLocalized
     if (!body.descriptionLocalized) throw new BadRequestException();
     for (const locale of Object.keys(body.descriptionLocalized)) {
-      if (!isLocale(locale) || !body.locales.includes(locale)) {
-        throw new BadRequestException('invalid_description_localized');
-      }
-      if (!isString(body.descriptionLocalized[locale])) {
-        throw new BadRequestException('invalid_description_localized');
-      }
-      if (
-        !length(
-          body.descriptionLocalized[locale],
-          POST_DESCRIPTION_LENGTH[0],
-          POST_DESCRIPTION_LENGTH[1]
-        )
-      ) {
-        throw new BadRequestException('invalid_description_localized_length');
-      }
+      validatorDescriptionLocalized(
+        locale,
+        body.locales,
+        body.descriptionLocalized
+      );
     }
 
     // contentLocalized
     if (!body.contentLocalized) throw new BadRequestException();
     for (const locale of Object.keys(body.contentLocalized)) {
-      if (!isLocale(locale) || !body.locales.includes(locale)) {
-        throw new BadRequestException('invalid_content_localized');
-      }
-      if (!isString(body.contentLocalized[locale])) {
-        throw new BadRequestException('invalid_content_localized');
-      }
-      if (
-        !length(
-          body.contentLocalized[locale],
-          POST_CONTENT_LENGTH[0],
-          POST_CONTENT_LENGTH[1]
-        )
-      ) {
-        throw new BadRequestException('invalid_content_localized_length');
-      }
+      validatorContentLocalized(locale, body.locales, body.contentLocalized);
+    }
+
+    // attachments
+    let attachments = [...extractAttachments(body.content)];
+    for (const locale of Object.keys(body.contentLocalized)) {
+      attachments = [
+        ...attachments,
+        ...extractAttachments(body.contentLocalized[locale])
+      ];
     }
 
     const result = await this.postService.create(user._id, {
@@ -171,14 +140,81 @@ export class PostController {
         return new Types.ObjectId(e);
       }),
       thumbnail: new Types.ObjectId(body.thumbnail),
-      attachments: body.attachments
-        ? body.attachments.map((e) => {
-            return new Types.ObjectId(e);
-          })
-        : [],
-      keywords: body.keywords
+      attachments: attachments.map((e) => {
+        return new Types.ObjectId(e);
+      }),
+      keywords: body.keywords,
+      schedule: body.schedule ? new Date(body.schedule) : undefined
     });
     return await this.postService.resolve(result);
+  }
+
+  @Throttle({
+    'post.update': {
+      ttl: 60000 * 30,
+      limit: 5
+    }
+  })
+  @UseGuards(AuthGuard)
+  @Post(':id')
+  async update(
+    @Param() param: PostIdParamDto,
+    @UserDecorator() user: UserDocument,
+    @Body() body: PostCreateBodyDto
+  ) {
+    const id = new Types.ObjectId(param.id);
+    const post = await this.postService.get(id);
+
+    // titleLocalized
+    if (!body.titleLocalized) throw new BadRequestException();
+    for (const locale of Object.keys(body.titleLocalized)) {
+      validatorTitleLocalized(locale, body.locales, body.titleLocalized);
+    }
+
+    // descriptionLocalized
+    if (!body.descriptionLocalized) throw new BadRequestException();
+    for (const locale of Object.keys(body.descriptionLocalized)) {
+      validatorDescriptionLocalized(
+        locale,
+        body.locales,
+        body.descriptionLocalized
+      );
+    }
+
+    // contentLocalized
+    if (!body.contentLocalized) throw new BadRequestException();
+    for (const locale of Object.keys(body.contentLocalized)) {
+      validatorContentLocalized(locale, body.locales, body.contentLocalized);
+    }
+
+    // attachments
+    let attachments = [...extractAttachments(body.content)];
+    for (const locale of Object.keys(body.contentLocalized)) {
+      attachments = [
+        ...attachments,
+        ...extractAttachments(body.contentLocalized[locale])
+      ];
+    }
+
+    await this.postService.update(user, post, {
+      locale: body.locale,
+      locales: body.locales,
+      title: body.title,
+      titleLocalized: body.titleLocalized,
+      description: body.description,
+      descriptionLocalized: body.descriptionLocalized,
+      content: body.content,
+      contentLocalized: body.contentLocalized,
+      categories: body.categories.map((e) => {
+        return new Types.ObjectId(e);
+      }),
+      thumbnail: new Types.ObjectId(body.thumbnail),
+      attachments: attachments.map((e) => {
+        return new Types.ObjectId(e);
+      }),
+      keywords: body.keywords,
+      schedule: body.schedule ? new Date(body.schedule) : undefined
+    });
   }
 
   @Get(':slug')

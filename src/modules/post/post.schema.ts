@@ -74,20 +74,8 @@ export class PostRevision extends Document<Types.ObjectId> {
   @Prop({ required: true, index: true })
   user: Types.ObjectId;
 
-  @Prop({ required: true, index: true })
-  locale: string;
-
-  @Prop({ required: true, index: true })
-  title: string;
-
-  @Prop({ type: Object, default: {} })
-  titleLocalized: { [key: string]: string };
-
-  @Prop({ required: true })
-  content: string;
-
-  @Prop({ type: Object, default: {} })
-  contentLocalized: { [key: string]: string };
+  @Prop({ required: true, type: Object })
+  changes: { [key: string]: any };
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;

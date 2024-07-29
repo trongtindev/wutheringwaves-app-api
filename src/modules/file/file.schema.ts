@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, Types } from 'mongoose';
+import { IFileMetadata } from './file.interface';
 
 export type FileDocument = HydratedDocument<File>;
 
@@ -19,6 +20,9 @@ export class File extends Document<Types.ObjectId> {
 
   @Prop({ required: true })
   name: string;
+
+  @Prop({ type: Object, default: null })
+  metadata?: IFileMetadata;
 
   @Prop({ default: () => new Date(), index: true })
   createdAt: Date;

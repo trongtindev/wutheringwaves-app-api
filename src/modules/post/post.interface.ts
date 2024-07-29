@@ -54,4 +54,5 @@ export interface IPostCreateArgs {
 
   attachments?: Types.ObjectId[];
   keywords: string;
+  schedule?: Date;
 }
