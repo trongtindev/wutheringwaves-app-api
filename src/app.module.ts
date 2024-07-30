@@ -25,6 +25,7 @@ import { SyncModule } from './modules/sync/sync.module';
 import { ResourceModule } from './modules/resource/resource.module';
 import { IndexingModule } from './modules/indexing/indexing.module';
 import { DiscordModule } from './modules/discord/discord.module';
+import { GithubModule } from './modules/github/github.module';
 
 // environment
 dotenv.config({ path: '.env.production' });
@@ -100,7 +101,8 @@ assert(MONGO_PASS);
     IndexingModule,
     AIModule,
     ResourceModule,
-    DiscordModule
+    DiscordModule,
+    GithubModule
   ],
   providers: [
     {
