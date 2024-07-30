@@ -6,6 +6,7 @@ import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import { GithubCommitBodyDto } from './github.dto';
 import * as prettier from 'prettier';
+import * as prettierSortJson from 'prettier-plugin-sort-json';
 
 @Controller('github')
 export class GithubController {
@@ -25,7 +26,8 @@ export class GithubController {
   ) {
     const content = await prettier.format(body.data, {
       endOfLine: 'crlf',
-      parser: 'json'
+      parser: 'json',
+      plugins: [prettierSortJson]
     });
     return await this.githubService.commit(user, { path: body.path, content });
   }

@@ -37,7 +37,6 @@
     "tsconfig-paths": "^4.2.0"
   },
   "dependencies": {
-    "prettier": "^3.3.3",
     "@aws-sdk/client-s3": "^3.609.0",
     "@nestjs/bull": "^10.1.1",
     "@nestjs/cache-manager": "^2.2.2",
@@ -72,6 +71,8 @@
     "jwt-decode": "^4.0.0",
     "mongoose": "^8.4.4",
     "nestjs-form-data": "^1.9.91",
+    "prettier": "^3.3.3",
+    "prettier-plugin-sort-json": "^4.0.0",
     "redis": "^4.6.15",
     "rxjs": "^7.8.1",
     "sharp": "^0.33.4",
