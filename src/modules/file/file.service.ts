@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -263,7 +264,7 @@ export class FileService implements OnApplicationBootstrap {
       expiresIn = expires;
     }
 
-    const result = await this.model.updateOne(
+    await this.model.updateOne(
       {
         _id: id
       },
@@ -274,9 +275,5 @@ export class FileService implements OnApplicationBootstrap {
         }
       }
     );
-    if (result.modifiedCount === 0) {
-      this.logger.verbose(`setExpire(${id}) ${expiresIn} modifiedCount===0`);
-      throw new ServiceUnavailableException();
-    }
   }
 }

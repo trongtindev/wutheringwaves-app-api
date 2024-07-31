@@ -86,17 +86,11 @@ export const compareObject = (objectA: any, objectB: any) => {
 export const compareLocalizedChanged = (objectA: any, objectB: any) => {};
 
 export const extractAttachments = (content: string): string[] => {
-  // Regular expression to match <img> tags with the fid attribute
-  const imgTagRegex = /<img[^>]*\bfid\b[^>]*>/g;
-  const matches = [];
-  let match: string[];
-
-  // Use the regex to find all matching img tags
-  while ((match = imgTagRegex.exec(content)) !== null) {
-    const fid = match[0].split('fid="')[1].split('"')[0];
-    if (!matches.includes(fid)) matches.push(fid);
-  }
-
+  const regex = new RegExp(/<img[^>]*\bsrc\b[^>]*>/g, 'gi');
+  const matches = (content.match(regex) || []).map((img: string) => {
+    const url = new URL(img.split('src="')[1].split('"')[0]);
+    return url.searchParams.get('id');
+  });
   return matches;
 };
 
