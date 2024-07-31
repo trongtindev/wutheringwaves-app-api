@@ -14,10 +14,10 @@ export class DiscordEvents {
       activities: [
         {
           type: ActivityType.Custom,
-          name: 'WutheringWaves.app'
-        }
+          name: 'WutheringWaves.app',
+        },
       ],
-      status: 'online'
+      status: 'online',
     });
   }
 }

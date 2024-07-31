@@ -10,14 +10,14 @@ import {
   Param,
   Post,
   Query,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import {
   PostCreateBodyDto,
   PostIdParamDto,
   PostListQueryDto,
-  PostSlugParamDto
+  PostSlugParamDto,
 } from './post.dto';
 import { Types } from 'mongoose';
 import { UserDocument } from '../user/user.schema';
@@ -29,14 +29,14 @@ import {
   extractAttachments,
   validatorContentLocalized,
   validatorDescriptionLocalized,
-  validatorTitleLocalized
+  validatorTitleLocalized,
 } from './post.utils';
 
 @Controller('posts')
 export class PostController {
   constructor(
     private postService: PostService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   @Get()
@@ -46,7 +46,7 @@ export class PostController {
         ? query.categories.map((e) => {
             return new Types.ObjectId(e);
           })
-        : undefined
+        : undefined,
     });
 
     return {
@@ -54,8 +54,8 @@ export class PostController {
       items: await Promise.all(
         result.items.map((e) => {
           return this.postService.resolve(e);
-        })
-      )
+        }),
+      ),
     };
   }
 
@@ -79,22 +79,22 @@ export class PostController {
       items: await Promise.all(
         result.items.map((e) => {
           return this.postService.resolveCategory(e);
-        })
-      )
+        }),
+      ),
     };
   }
 
   @Throttle({
     'post.create': {
       ttl: 60000 * 30,
-      limit: 10
-    }
+      limit: 10,
+    },
   })
   @UseGuards(AuthGuard)
   @Post()
   async create(
     @UserDecorator() user: UserDocument,
-    @Body() body: PostCreateBodyDto
+    @Body() body: PostCreateBodyDto,
   ) {
     // titleLocalized
     if (!body.titleLocalized) throw new BadRequestException();
@@ -108,7 +108,7 @@ export class PostController {
       validatorDescriptionLocalized(
         locale,
         body.locales,
-        body.descriptionLocalized
+        body.descriptionLocalized,
       );
     }
 
@@ -123,7 +123,7 @@ export class PostController {
     for (const locale of Object.keys(body.contentLocalized)) {
       attachments = [
         ...attachments,
-        ...extractAttachments(body.contentLocalized[locale])
+        ...extractAttachments(body.contentLocalized[locale]),
       ];
     }
 
@@ -144,7 +144,7 @@ export class PostController {
         return new Types.ObjectId(e);
       }),
       keywords: body.keywords,
-      schedule: body.schedule ? new Date(body.schedule) : undefined
+      schedule: body.schedule ? new Date(body.schedule) : undefined,
     });
     return await this.postService.resolve(result);
   }
@@ -152,15 +152,15 @@ export class PostController {
   @Throttle({
     'post.update': {
       ttl: 60000 * 30,
-      limit: 5
-    }
+      limit: 5,
+    },
   })
   @UseGuards(AuthGuard)
   @Post(':id')
   async update(
     @Param() param: PostIdParamDto,
     @UserDecorator() user: UserDocument,
-    @Body() body: PostCreateBodyDto
+    @Body() body: PostCreateBodyDto,
   ) {
     const id = new Types.ObjectId(param.id);
     const post = await this.postService.get(id);
@@ -177,7 +177,7 @@ export class PostController {
       validatorDescriptionLocalized(
         locale,
         body.locales,
-        body.descriptionLocalized
+        body.descriptionLocalized,
       );
     }
 
@@ -192,7 +192,7 @@ export class PostController {
     for (const locale of Object.keys(body.contentLocalized)) {
       attachments = [
         ...attachments,
-        ...extractAttachments(body.contentLocalized[locale])
+        ...extractAttachments(body.contentLocalized[locale]),
       ];
     }
 
@@ -213,7 +213,7 @@ export class PostController {
         return new Types.ObjectId(e);
       }),
       keywords: body.keywords,
-      schedule: body.schedule ? new Date(body.schedule) : undefined
+      schedule: body.schedule ? new Date(body.schedule) : undefined,
     });
   }
 
@@ -232,15 +232,15 @@ export class PostController {
     const document = await this.postService.get(new Types.ObjectId(param.id));
     const result = await this.postService.list(
       {
-        categories: document.categories
+        categories: document.categories,
       },
       {
         filter: {
           _id: {
-            $ne: document._id
-          }
-        }
-      }
+            $ne: document._id,
+          },
+        },
+      },
     );
 
     return {
@@ -248,8 +248,8 @@ export class PostController {
       items: await Promise.all(
         result.items.map((e) => {
           return this.postService.resolve(e);
-        })
-      )
+        }),
+      ),
     };
   }
 
@@ -257,7 +257,7 @@ export class PostController {
   @Delete(':id')
   async delete(
     @Param() param: PostIdParamDto,
-    @UserDecorator() user: UserDocument
+    @UserDecorator() user: UserDocument,
   ) {
     const post = await this.postService.get(new Types.ObjectId(param.id));
     if (post.deleted) throw new NotFoundException();

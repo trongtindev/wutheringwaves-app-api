@@ -7,7 +7,7 @@ import {
   PostCategorySchema,
   PostRevision,
   PostRevisionSchema,
-  PostSchema
+  PostSchema,
 } from './post.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PostEvents } from './post.events';
@@ -19,11 +19,11 @@ import { PostSchedule } from './post.schedule';
     MongooseModule.forFeature([
       { name: Post.name, schema: PostSchema },
       { name: PostRevision.name, schema: PostRevisionSchema },
-      { name: PostCategory.name, schema: PostCategorySchema }
-    ])
+      { name: PostCategory.name, schema: PostCategorySchema },
+    ]),
   ],
   controllers: [PostController],
   providers: [PostService, PostEvents, PostSchedule],
-  exports: [PostService]
+  exports: [PostService],
 })
 export class PostModule {}

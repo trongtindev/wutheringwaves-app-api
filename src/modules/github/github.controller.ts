@@ -15,19 +15,19 @@ export class GithubController {
   @Throttle({
     commit: {
       ttl: 60 * 30 * 1000,
-      limit: 30
-    }
+      limit: 30,
+    },
   })
   @UseGuards(AuthGuard)
   @Post('commit')
   async commit(
     @UserDecorator() user: UserDocument,
-    @Body() body: GithubCommitBodyDto
+    @Body() body: GithubCommitBodyDto,
   ) {
     const content = await prettier.format(body.data, {
       endOfLine: 'crlf',
       parser: 'json',
-      plugins: [prettierSortJson]
+      plugins: [prettierSortJson],
     });
     return await this.githubService.commit(user, { path: body.path, content });
   }

@@ -3,13 +3,13 @@ import { isLocale, isString, length } from 'class-validator';
 import {
   POST_CONTENT_LENGTH,
   POST_DESCRIPTION_LENGTH,
-  POST_TITLE_LENGTH
+  POST_TITLE_LENGTH,
 } from './post.config';
 
 export const validatorTitleLocalized = (
   locale: string,
   locales: string[],
-  localized: { [key: string]: string }
+  localized: { [key: string]: string },
 ) => {
   if (!isLocale(locale) || !locales.includes(locale)) {
     throw new BadRequestException('invalid_localized_title');
@@ -25,7 +25,7 @@ export const validatorTitleLocalized = (
 export const validatorDescriptionLocalized = (
   locale: string,
   locales: string[],
-  localized: { [key: string]: string }
+  localized: { [key: string]: string },
 ) => {
   if (!isLocale(locale) || !locales.includes(locale)) {
     throw new BadRequestException('invalid_description_localized');
@@ -37,7 +37,7 @@ export const validatorDescriptionLocalized = (
     !length(
       localized[locale],
       POST_DESCRIPTION_LENGTH[0],
-      POST_DESCRIPTION_LENGTH[1]
+      POST_DESCRIPTION_LENGTH[1],
     )
   ) {
     throw new BadRequestException('invalid_description_localized_length');
@@ -47,7 +47,7 @@ export const validatorDescriptionLocalized = (
 export const validatorContentLocalized = (
   locale: string,
   locales: string[],
-  localized: { [key: string]: string }
+  localized: { [key: string]: string },
 ) => {
   if (!isLocale(locale) || !locales.includes(locale)) {
     throw new BadRequestException('invalid_content_localized');

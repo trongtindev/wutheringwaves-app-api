@@ -36,7 +36,7 @@ export class File extends Document<Types.ObjectId> {
       expires.setMinutes(expires.getMinutes() + 30);
       return expires;
     },
-    index: true
+    index: true,
   })
   expiresIn: Date;
 }

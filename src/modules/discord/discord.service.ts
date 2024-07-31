@@ -2,7 +2,7 @@ import {
   BadGatewayException,
   Injectable,
   Logger,
-  OnApplicationBootstrap
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -13,7 +13,7 @@ import {
   Partials,
   REST,
   Routes,
-  SlashCommandBuilder
+  SlashCommandBuilder,
 } from 'discord.js';
 import { DiscordEventType } from './discord.types';
 import { assert } from 'console';
@@ -42,9 +42,9 @@ export class DiscordService implements OnApplicationBootstrap {
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildMessagePolls,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.DirectMessages
+        GatewayIntentBits.DirectMessages,
       ],
-      partials: [Partials.Channel, Partials.Message]
+      partials: [Partials.Channel, Partials.Message],
     });
     this.rest = new REST().setToken(DISCORD_TOKEN);
 
@@ -89,7 +89,7 @@ export class DiscordService implements OnApplicationBootstrap {
     const { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } = process.env;
     await this.rest.put(
       Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID),
-      { body: commands }
+      { body: commands },
     );
   }
 

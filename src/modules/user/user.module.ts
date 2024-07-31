@@ -8,10 +8,10 @@ import { UserEvents } from './user.events';
 @Global()
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UserController],
   providers: [UserService, UserEvents],
-  exports: [UserService]
+  exports: [UserService],
 })
 export class UserModule {}

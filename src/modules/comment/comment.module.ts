@@ -6,7 +6,7 @@ import {
   Comment,
   CommentChannel,
   CommentChannelSchema,
-  CommentSchema
+  CommentSchema,
 } from './comment.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CommentSchedule } from './comment.schedule';
@@ -16,11 +16,11 @@ import { CommentSchedule } from './comment.schedule';
   imports: [
     MongooseModule.forFeature([
       { name: Comment.name, schema: CommentSchema },
-      { name: CommentChannel.name, schema: CommentChannelSchema }
-    ])
+      { name: CommentChannel.name, schema: CommentChannelSchema },
+    ]),
   ],
   controllers: [CommentController],
   providers: [CommentService, CommentEvents, CommentSchedule],
-  exports: [CommentService]
+  exports: [CommentService],
 })
 export class CommentModule {}

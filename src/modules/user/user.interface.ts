@@ -10,7 +10,7 @@ export const userRoles = [
   'Moderator',
   'Content Writer',
   'Contributor',
-  'Member'
+  'Member',
 ];
 
 export type UserRole =
@@ -27,5 +27,5 @@ export enum UserRoleId {
   Moderator = '1266822268705706125',
   'Content Writer' = '1266821365453815851',
   Contributor = '1249779112583888987',
-  Member = '1249779446064484504'
+  Member = '1249779446064484504',
 }

@@ -14,10 +14,10 @@ import { FileQueues } from './file.queues';
   imports: [
     MongooseModule.forFeature([{ name: File.name, schema: FileSchema }]),
     BullModule.registerQueue({ name: 'file' }),
-    NestjsFormDataModule
+    NestjsFormDataModule,
   ],
   controllers: [FileController],
   providers: [FileService, FileEvents, FileSchedule, FileQueues],
-  exports: [FileService]
+  exports: [FileService],
 })
 export class FileModule {}

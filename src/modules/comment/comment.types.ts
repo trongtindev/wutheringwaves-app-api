@@ -1,4 +1,4 @@
 export enum CommentEventType {
   afterCreate = 'comment.afterCreate',
-  afterCreateAsync = 'comment.afterCreateAsync'
+  afterCreateAsync = 'comment.afterCreateAsync',
 }

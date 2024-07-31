@@ -6,7 +6,7 @@ import {
   Get,
   Post,
   Query,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -28,7 +28,7 @@ export class UserController {
   @Post('me/link')
   async link(
     @UserDecorator() user: UserDocument,
-    @Body() body: UserVerifyBodyDto
+    @Body() body: UserVerifyBodyDto,
   ) {
     if (user.discordId) {
       throw new BadRequestException('already_verified');
@@ -49,15 +49,15 @@ export class UserController {
   @Get('me/roles')
   async getRoles(
     @UserDecorator() user: UserDocument,
-    @Query() query: UserGetRolesQueryDto
+    @Query() query: UserGetRolesQueryDto,
   ) {
     const result = await this.userService.listRoles(user, {
-      refresh: query.refresh
+      refresh: query.refresh,
     });
     if (result === null) return null;
     return {
       total: result.length,
-      items: result
+      items: result,
     };
   }
 }

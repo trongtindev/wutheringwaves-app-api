@@ -7,6 +7,6 @@ import { SyncService } from './sync.service';
   imports: [],
   controllers: [SyncController],
   providers: [SyncService],
-  exports: [SyncService]
+  exports: [SyncService],
 })
 export class SyncModule {}

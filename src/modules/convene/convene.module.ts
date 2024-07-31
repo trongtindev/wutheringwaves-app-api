@@ -4,7 +4,7 @@ import {
   ConveneStore,
   ConveneStoreSchema,
   ConveneSummary,
-  ConveneSummarySchema
+  ConveneSummarySchema,
 } from './convene.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConveneController } from './convene.controller';
@@ -18,12 +18,12 @@ import { BullModule } from '@nestjs/bull';
   imports: [
     MongooseModule.forFeature([
       { name: ConveneStore.name, schema: ConveneStoreSchema },
-      { name: ConveneSummary.name, schema: ConveneSummarySchema }
+      { name: ConveneSummary.name, schema: ConveneSummarySchema },
     ]),
-    BullModule.registerQueue({ name: 'convene' })
+    BullModule.registerQueue({ name: 'convene' }),
   ],
   controllers: [ConveneController],
   providers: [ConveneService, ConveneEvents, ConveneSchedule, ConveneQueue],
-  exports: [ConveneService]
+  exports: [ConveneService],
 })
 export class ConveneModule {}

@@ -6,6 +6,6 @@ import { MapController } from './map.controller';
   imports: [],
   controllers: [MapController],
   providers: [MapService],
-  exports: [MapService]
+  exports: [MapService],
 })
 export class MapModule {}

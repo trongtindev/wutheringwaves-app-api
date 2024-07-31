@@ -13,7 +13,7 @@ export class GithubService implements OnApplicationBootstrap {
 
   constructor(
     private eventEmitter: EventEmitter2,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   onApplicationBootstrap() {
@@ -24,8 +24,8 @@ export class GithubService implements OnApplicationBootstrap {
       baseURL: `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`,
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github.v3+json'
-      }
+        Accept: 'application/vnd.github.v3+json',
+      },
     });
   }
 
@@ -41,25 +41,25 @@ export class GithubService implements OnApplicationBootstrap {
 
     // Step 1: Get the reference of the base branch
     const { data: baseBranchData } = await this.github.get(
-      `/git/ref/heads/${GITHUB_BRANCH}`
+      `/git/ref/heads/${GITHUB_BRANCH}`,
     );
     const baseSha = baseBranchData.object.sha;
 
     // Step 2: Create a new branch
     await this.github.post(`/git/refs`, {
       ref: `refs/heads/${NEW_BRANCH}`,
-      sha: baseSha
+      sha: baseSha,
     });
 
     // Step 3: Create a new blob for the file
     const { data: blobData } = await this.github.post(`/git/blobs`, {
       content: Buffer.from(FILE_CONTENT).toString('base64'),
-      encoding: 'base64'
+      encoding: 'base64',
     });
 
     // Step 4: Get the latest commit's tree
     const { data: commitData } = await this.github.get(
-      `/git/commits/${baseSha}`
+      `/git/commits/${baseSha}`,
     );
     const treeSha = commitData.tree.sha;
 
@@ -71,21 +71,21 @@ export class GithubService implements OnApplicationBootstrap {
           path: FILE_PATH,
           mode: '100644',
           type: 'blob',
-          sha: blobData.sha
-        }
-      ]
+          sha: blobData.sha,
+        },
+      ],
     });
 
     // Step 6: Create a new commit with the tree
     const { data: newCommitData } = await this.github.post(`/git/commits`, {
       message: COMMIT_MESSAGE,
       tree: newTreeData.sha,
-      parents: [baseSha]
+      parents: [baseSha],
     });
 
     // Step 7: Update the reference to point to the new commit
     await this.github.patch(`/git/refs/heads/${NEW_BRANCH}`, {
-      sha: newCommitData.sha
+      sha: newCommitData.sha,
     });
 
     // Step 8: Create a pull request
@@ -93,7 +93,7 @@ export class GithubService implements OnApplicationBootstrap {
       title: PR_TITLE,
       head: NEW_BRANCH,
       base: GITHUB_BRANCH,
-      body: PR_BODY
+      body: PR_BODY,
     });
 
     return pullRequestData;

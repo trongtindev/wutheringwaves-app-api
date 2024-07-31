@@ -11,7 +11,7 @@ export class UserEvents {
   private logger = new Logger(UserEvents.name);
   constructor(
     private userService: UserService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   @OnEvent(DiscordEventType.messageCreate)
@@ -27,7 +27,7 @@ export class UserEvents {
     const userId = message.content.split('/link ')[1];
     if (!Types.ObjectId.isValid(userId)) {
       await message.channel.send({
-        content: 'INVALID_USER_ID'
+        content: 'INVALID_USER_ID',
       });
       return;
     }
@@ -35,12 +35,12 @@ export class UserEvents {
     const token = await this.jwtService.signAsync(
       {
         sub: userId,
-        discordId: message.author.id
+        discordId: message.author.id,
       },
       {
         secret: process.env.AUTH_SECRET,
-        expiresIn: '30d'
-      }
+        expiresIn: '30d',
+      },
     );
     await message.channel.send({ content: token });
   }

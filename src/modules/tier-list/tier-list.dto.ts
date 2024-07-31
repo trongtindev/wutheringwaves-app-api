@@ -7,7 +7,7 @@ import {
   IsOptional,
   IsString,
   Length,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import striptags from 'striptags';
 import { TierListType } from './tier-list.types';

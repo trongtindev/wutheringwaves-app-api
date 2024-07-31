@@ -1,4 +1,4 @@
 export enum PostEventEnum {
   afterCreate = 'post.afterCreate',
-  afterCreateAsync = 'post.afterCreateAsync'
+  afterCreateAsync = 'post.afterCreateAsync',
 }

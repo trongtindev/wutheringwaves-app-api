@@ -4,7 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnApplicationBootstrap
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,7 +14,7 @@ import {
   PostCategory,
   PostCategoryDocument,
   PostDocument,
-  PostRevision
+  PostRevision,
 } from './post.schema';
 import { IPost, IPostCategory, IPostCreateArgs } from './post.interface';
 import { FileService } from '../file/file.service';
@@ -35,55 +35,55 @@ export class PostService implements OnApplicationBootstrap {
     @InjectModel(PostRevision.name) private revisionModel: Model<PostRevision>,
     @InjectModel(PostCategory.name) private categoryModel: Model<PostCategory>,
     private fileService: FileService,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   async onApplicationBootstrap() {
     this.categories = await this.initialCategories([
       {
         slug: 'characters',
-        name: 'Characters'
+        name: 'Characters',
       },
       {
         slug: 'weapons',
-        name: 'Weapons'
+        name: 'Weapons',
       },
       {
         slug: 'echoes',
-        name: 'Echoes'
+        name: 'Echoes',
       },
       {
         slug: 'items',
-        name: 'Items'
+        name: 'Items',
       },
       {
         slug: 'maps',
-        name: 'Maps'
+        name: 'Maps',
       },
       {
         slug: 'tower-of-adversity',
-        name: 'Tower of Adversity'
+        name: 'Tower of Adversity',
       },
       {
         slug: 'events',
-        name: 'Events'
+        name: 'Events',
       },
       {
         slug: 'quests',
-        name: 'Quests'
+        name: 'Quests',
       },
       {
         slug: 'enemies',
-        name: 'Enemies'
+        name: 'Enemies',
       },
       {
         slug: 'version-1-0',
-        name: 'Version 1.0'
+        name: 'Version 1.0',
       },
       {
         slug: 'version-1-1',
-        name: 'Version 1.1'
-      }
+        name: 'Version 1.1',
+      },
     ]);
   }
 
@@ -104,7 +104,7 @@ export class PostService implements OnApplicationBootstrap {
       filter?: any;
       limit?: number;
       offset?: number;
-    }
+    },
   ): Promise<{
     total: number;
     items: PostDocument[];
@@ -116,12 +116,12 @@ export class PostService implements OnApplicationBootstrap {
     const filter: any = options.filter || {};
     if (args.categories) {
       filter.categories = {
-        $in: args.categories
+        $in: args.categories,
       };
     }
     filter.deleted = false;
     filter.createdAt = {
-      $lte: new Date()
+      $lte: new Date(),
     };
 
     const total = await this.model.countDocuments(filter);
@@ -130,7 +130,7 @@ export class PostService implements OnApplicationBootstrap {
       .limit(options.limit)
       .skip(options.offset)
       .sort({
-        createdAt: 'desc'
+        createdAt: 'desc',
       });
 
     return { total, items };
@@ -138,7 +138,7 @@ export class PostService implements OnApplicationBootstrap {
 
   async create(
     user: Types.ObjectId,
-    args: IPostCreateArgs
+    args: IPostCreateArgs,
   ): Promise<PostDocument> {
     const exists = await this.model.findOne({ title: args.title });
     if (exists) throw new BadRequestException();
@@ -158,7 +158,7 @@ export class PostService implements OnApplicationBootstrap {
       thumbnail: args.thumbnail,
       categories: args.categories,
       keywords: args.keywords,
-      createdAt: args.schedule || new Date()
+      createdAt: args.schedule || new Date(),
     });
 
     // check thumbnail
@@ -171,7 +171,7 @@ export class PostService implements OnApplicationBootstrap {
     await Promise.all(
       args.attachments.map(async (e) => {
         return await this.fileService.setExpire(e, -1);
-      })
+      }),
     );
 
     return await this.model.findById(result)!;
@@ -180,7 +180,7 @@ export class PostService implements OnApplicationBootstrap {
   async update(
     user: Types.ObjectId | UserDocument,
     post: Types.ObjectId | PostDocument,
-    args: IPostCreateArgs
+    args: IPostCreateArgs,
   ) {
     if (post instanceof Types.ObjectId) {
       post = await this.get(post);
@@ -235,13 +235,13 @@ export class PostService implements OnApplicationBootstrap {
     await this.revisionModel.create({
       post: post._id,
       user: user._id,
-      changes
+      changes,
     });
 
     // update this post
     await this.model.updateOne(
       {
-        _id: post._id
+        _id: post._id,
       },
       {
         $set: {
@@ -255,9 +255,9 @@ export class PostService implements OnApplicationBootstrap {
           keywords: args.keywords,
           thumbnail: args.thumbnail,
           attachments: args.attachments,
-          createdAt: args.schedule || post.createdAt
-        }
-      }
+          createdAt: args.schedule || post.createdAt,
+        },
+      },
     );
 
     // delete old thumbnail
@@ -283,18 +283,18 @@ export class PostService implements OnApplicationBootstrap {
     Promise.all(
       unused.map(async (e) => {
         return await this.fileService.setExpire(e, 0);
-      })
+      }),
     );
     Promise.all(
       added.map(async (e) => {
         return await this.fileService.setExpire(e, -1);
-      })
+      }),
     );
   }
 
   async delete(
     user: Types.ObjectId | UserDocument,
-    post: Types.ObjectId | PostDocument
+    post: Types.ObjectId | PostDocument,
   ) {
     if (post instanceof Types.ObjectId) {
       post = await this.get(post);
@@ -307,20 +307,20 @@ export class PostService implements OnApplicationBootstrap {
       const isHasRoles = await this.userService.hasRoles(user, [
         'Moderator',
         'Manager',
-        'Owner'
+        'Owner',
       ]);
       if (!isHasRoles) throw new ForbiddenException();
     }
 
     await this.model.updateOne(
       {
-        _id: post._id
+        _id: post._id,
       },
       {
         $set: {
-          deleted: true
-        }
-      }
+          deleted: true,
+        },
+      },
     );
   }
 
@@ -352,7 +352,7 @@ export class PostService implements OnApplicationBootstrap {
       return await Promise.all(
         document.categories.map((e) => {
           return this.resolveCategory(e);
-        })
+        }),
       );
     })();
 
@@ -374,12 +374,12 @@ export class PostService implements OnApplicationBootstrap {
       updatedAt: document.updatedAt.toISOString(),
       createdAt: document.createdAt.toISOString(),
       keywords: document.keywords,
-      deleted: document.deleted
+      deleted: document.deleted,
     };
   }
 
   async resolveCategory(
-    category: Types.ObjectId | PostCategoryDocument
+    category: Types.ObjectId | PostCategoryDocument,
   ): Promise<IPostCategory> {
     if (category instanceof Types.ObjectId) {
       category = this.categories.find((e) => {
@@ -390,7 +390,7 @@ export class PostService implements OnApplicationBootstrap {
       id: category.id,
       slug: category.slug,
       name: category.name,
-      nameLocalized: category.nameLocalized
+      nameLocalized: category.nameLocalized,
     };
   }
 
@@ -399,57 +399,57 @@ export class PostService implements OnApplicationBootstrap {
       slug: string;
       name: string;
       nameLocalized?: string[];
-    }[]
+    }[],
   ): Promise<PostCategoryDocument[]> {
     await this.categoryModel.bulkWrite(
       items.map((e) => {
         return {
           updateOne: {
             filter: {
-              slug: e.slug
+              slug: e.slug,
             },
             update: {
               $set: {
                 name: e.name,
                 nameLocalized: e.nameLocalized || {},
-                updatedAt: new Date()
+                updatedAt: new Date(),
               },
               $setOnInsert: {
-                slug: e.slug
-              }
+                slug: e.slug,
+              },
             },
-            upsert: true
-          }
+            upsert: true,
+          },
         };
-      })
+      }),
     );
 
     return Promise.all(
       items.map(async (e) => {
         return await this.categoryModel.findOne({
-          slug: e.slug
+          slug: e.slug,
         });
-      })
+      }),
     );
   }
 
   getCategories() {
     return {
       items: this.categories,
-      total: this.categories.length
+      total: this.categories.length,
     };
   }
 
   async increaseViews(post: Types.ObjectId, value: number) {
     await this.model.updateOne(
       {
-        _id: post
+        _id: post,
       },
       {
         $inc: {
-          views: value
-        }
-      }
+          views: value,
+        },
+      },
     );
   }
 }

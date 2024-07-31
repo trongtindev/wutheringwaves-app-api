@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OAuth2Client } from 'google-auth-library';
@@ -22,7 +22,7 @@ export class AuthService {
   constructor(
     private eventEmitter: EventEmitter2,
     private userService: UserService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {
     const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SITE_URL } = process.env;
     assert(GOOGLE_CLIENT_ID);
@@ -31,7 +31,7 @@ export class AuthService {
     this.authClient = new OAuth2Client({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      redirectUri: SITE_URL
+      redirectUri: SITE_URL,
     });
   }
 
@@ -53,21 +53,21 @@ export class AuthService {
 
     this.logger.verbose(`signIn() verifyIdToken()`);
     const result = await this.authClient.verifyIdToken({
-      idToken: args.idToken
+      idToken: args.idToken,
     });
 
     const { email, name, picture } = result.getPayload();
     const user = await this.userService.upsert({
       email,
       name,
-      photoUrl: picture
+      photoUrl: picture,
     });
 
     // emit event
     const eventArgs: AuthAfterSignInArgs = { document: user };
     await this.eventEmitter.emitAsync(
       AuthEventType.beforeSignInAsync,
-      eventArgs
+      eventArgs,
     );
     this.eventEmitter.emit(AuthEventType.beforeSignIn, eventArgs);
 
@@ -87,12 +87,12 @@ export class AuthService {
         sub: user.id,
         email: user.email,
         name: user.name,
-        photoUrl: user.photoUrl
+        photoUrl: user.photoUrl,
       },
       {
         secret: process.env.AUTH_SECRET,
-        expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRES_IN
-      }
+        expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRES_IN,
+      },
     );
     const refreshToken = this.jwtService.sign(
       {
@@ -101,12 +101,12 @@ export class AuthService {
         sub: user.id,
         email: user.email,
         name: user.name,
-        photoUrl: user.photoUrl
+        photoUrl: user.photoUrl,
       },
       {
         secret: process.env.AUTH_SECRET,
-        expiresIn: process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN
-      }
+        expiresIn: process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN,
+      },
     );
 
     return { accessToken, refreshToken };
@@ -122,12 +122,12 @@ export class AuthService {
         sub: user.id,
         email: user.email,
         name: user.name,
-        photoUrl: user.photoUrl
+        photoUrl: user.photoUrl,
       },
       {
         secret: process.env.AUTH_SECRET,
-        expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRES_IN
-      }
+        expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRES_IN,
+      },
     );
 
     return { accessToken };
@@ -135,7 +135,7 @@ export class AuthService {
 
   async verifyAccessToken(token: string) {
     const decoded = await this.jwtService.verifyAsync(token, {
-      secret: process.env.AUTH_SECRET
+      secret: process.env.AUTH_SECRET,
     });
     if (!decoded.aud || decoded.aud !== 'accessToken' || !decoded.email) {
       this.logger.verbose(`verifyAccessToken() invalid aud ${decoded.aud}`);
@@ -146,7 +146,7 @@ export class AuthService {
 
   async verifyRefreshToken(token: string) {
     const decoded = await this.jwtService.verifyAsync(token, {
-      secret: process.env.AUTH_SECRET
+      secret: process.env.AUTH_SECRET,
     });
     if (!decoded.aud || decoded.aud !== 'refreshToken' || !decoded.email) {
       this.logger.verbose(`verifyRefreshToken() invalid aud ${decoded.aud}`);
@@ -160,8 +160,8 @@ export class AuthService {
       access_type: 'offline',
       scope: scope || [
         'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/userinfo.profile'
-      ]
+        'https://www.googleapis.com/auth/userinfo.profile',
+      ],
     });
   }
 }

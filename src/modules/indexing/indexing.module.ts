@@ -8,10 +8,10 @@ import { IndexingEvents } from './indexing.events';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: IndexingUrl.name, schema: IndexingUrlSchema }
-    ])
+      { name: IndexingUrl.name, schema: IndexingUrlSchema },
+    ]),
   ],
   providers: [IndexingService, IndexingSchedule, IndexingEvents],
-  exports: [IndexingService]
+  exports: [IndexingService],
 })
 export class IndexingModule {}

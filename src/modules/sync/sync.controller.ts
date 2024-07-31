@@ -5,7 +5,7 @@ import {
   Get,
   Post,
   Query,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { SyncService as SyncService } from './sync.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -21,42 +21,42 @@ export class SyncController {
   @Throttle({
     'sync.pull': {
       limit: 10,
-      ttl: 60000
-    }
+      ttl: 60000,
+    },
   })
   @UseGuards(AuthGuard)
   @Get('pull')
   async pull(
     @UserDecorator() user: UserDocument,
-    @Query() query: SyncPullQueryDto
+    @Query() query: SyncPullQueryDto,
   ) {
     return await this.syncService.pull(user._id, {
-      withData: query.withData
+      withData: query.withData,
     });
   }
 
   @Throttle({
     'sync.push': {
       limit: 15,
-      ttl: 60000
-    }
+      ttl: 60000,
+    },
   })
   @UseGuards(AuthGuard)
   @Post('push')
   async push(
     @UserDecorator() user: UserDocument,
-    @Body() body: SyncPushBodyDto
+    @Body() body: SyncPushBodyDto,
   ) {
     return await this.syncService.push(user._id, {
-      data: body.data
+      data: body.data,
     });
   }
 
   @Throttle({
     'sync.erase': {
       limit: 3,
-      ttl: 60000
-    }
+      ttl: 60000,
+    },
   })
   @UseGuards(AuthGuard)
   @Delete()

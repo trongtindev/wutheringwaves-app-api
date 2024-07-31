@@ -7,10 +7,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 @Global()
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: TierList.name, schema: TierListSchema }])
+    MongooseModule.forFeature([
+      { name: TierList.name, schema: TierListSchema },
+    ]),
   ],
   controllers: [TierListController],
   providers: [TierListService],
-  exports: [TierListService]
+  exports: [TierListService],
 })
 export class TierListModule {}

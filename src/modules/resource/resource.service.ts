@@ -7,7 +7,7 @@ import {
   IEcho,
   IItem,
   ITrophy,
-  IWeapon
+  IWeapon,
 } from './resource.interface';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class ResourceService implements OnApplicationBootstrap {
 
   constructor(private eventEmitter: EventEmitter2) {
     this.request = axios.create({
-      baseURL: process.env.SITE_URL
+      baseURL: process.env.SITE_URL,
     });
     axiosRetry(this.request, {
       retries: 99,
@@ -30,7 +30,7 @@ export class ResourceService implements OnApplicationBootstrap {
         this.logger.warn(`onRetry(${retryCount}) ${error} ${config.url}`);
       },
       retryCondition: () => true,
-      retryDelay: (count) => count * 1000
+      retryDelay: (count) => count * 1000,
     });
   }
 
@@ -40,7 +40,7 @@ export class ResourceService implements OnApplicationBootstrap {
     const loadCharacters = async () => {
       this.logger.log(`loadCharacters()`);
       const characters = await this.request.get<ICharacter[]>(
-        '/api/resources/characters'
+        '/api/resources/characters',
       );
       this.characters = characters.data;
       this.logger.log(`loadCharacters() ${this.characters.length}`);
@@ -63,7 +63,7 @@ export class ResourceService implements OnApplicationBootstrap {
     const loadTrophies = async () => {
       this.logger.log(`loadTrophies()`);
       const trophies = await this.request.get<ITrophy[]>(
-        '/api/resources/trophies'
+        '/api/resources/trophies',
       );
       this.trophies = trophies.data;
       this.logger.log(`loadTrophies() ${this.trophies.length}`);
@@ -72,7 +72,7 @@ export class ResourceService implements OnApplicationBootstrap {
     const loadWeapons = async () => {
       this.logger.log(`loadWeapons()`);
       const weapons = await this.request.get<IWeapon[]>(
-        '/api/resources/weapons'
+        '/api/resources/weapons',
       );
       this.weapons = weapons.data;
       this.logger.log(`loadWeapons() ${this.weapons.length}`);
@@ -83,7 +83,7 @@ export class ResourceService implements OnApplicationBootstrap {
       loadEchoes(),
       loadItems(),
       loadTrophies(),
-      loadWeapons()
+      loadWeapons(),
     ]);
   }
 }

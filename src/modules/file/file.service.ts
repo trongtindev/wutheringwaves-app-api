@@ -4,14 +4,14 @@ import {
   Logger,
   NotFoundException,
   OnApplicationBootstrap,
-  ServiceUnavailableException
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   PutObjectAclCommand,
-  S3Client
+  S3Client,
 } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import assert from 'assert';
@@ -34,7 +34,7 @@ export class FileService implements OnApplicationBootstrap {
 
   constructor(
     private eventEmitter: EventEmitter2,
-    @InjectModel(File.name) private model: Model<File>
+    @InjectModel(File.name) private model: Model<File>,
   ) {}
 
   async onApplicationBootstrap() {
@@ -46,7 +46,7 @@ export class FileService implements OnApplicationBootstrap {
       FILE_S3_REGION,
       FILE_S3_BUCKET,
       FILE_S3_ACCESS_KEY_ID,
-      FILE_S3_SECRET_ACCESS_KEY
+      FILE_S3_SECRET_ACCESS_KEY,
     } = process.env;
 
     assert(FILE_S3_ENDPOINT);
@@ -60,9 +60,9 @@ export class FileService implements OnApplicationBootstrap {
       region: FILE_S3_REGION,
       credentials: {
         accessKeyId: FILE_S3_ACCESS_KEY_ID,
-        secretAccessKey: FILE_S3_SECRET_ACCESS_KEY
+        secretAccessKey: FILE_S3_SECRET_ACCESS_KEY,
       },
-      endpoint: FILE_S3_ENDPOINT
+      endpoint: FILE_S3_ENDPOINT,
     });
   }
 
@@ -73,7 +73,7 @@ export class FileService implements OnApplicationBootstrap {
       ACL?: 'private' | 'public-read';
       client?: S3Client;
       bucket?: string;
-    }
+    },
   ) {
     params ??= {};
     params.ACL ??= 'public-read';
@@ -85,8 +85,8 @@ export class FileService implements OnApplicationBootstrap {
         Key: key,
         ACL: params.ACL,
         Body: typeof body === 'string' ? fs.createReadStream(body) : body,
-        Bucket: params.bucket
-      })
+        Bucket: params.bucket,
+      }),
     );
   }
 
@@ -95,8 +95,8 @@ export class FileService implements OnApplicationBootstrap {
     return await this.client.send(
       new DeleteObjectCommand({
         Key: key,
-        Bucket: process.env.FILE_S3_BUCKET
-      })
+        Bucket: process.env.FILE_S3_BUCKET,
+      }),
     );
   }
 
@@ -110,7 +110,7 @@ export class FileService implements OnApplicationBootstrap {
       type: file.type,
       size: file.size,
       createdAt: file.createdAt,
-      updatedAt: file.updatedAt
+      updatedAt: file.updatedAt,
     };
   }
 
@@ -126,7 +126,7 @@ export class FileService implements OnApplicationBootstrap {
 
   async upload(
     user: UserDocument,
-    memoryStoredFile: MemoryStoredFile
+    memoryStoredFile: MemoryStoredFile,
   ): Promise<FileDocument> {
     this.logger.verbose(`upload(${memoryStoredFile.originalName})`);
 
@@ -154,14 +154,14 @@ export class FileService implements OnApplicationBootstrap {
       name: fileName,
       size: memoryStoredFile.size,
       type: memoryStoredFile.mimetype,
-      metadata
+      metadata,
     });
     const document = await this.get(result.id);
 
     // emit event
     const eventArgs: IFileUploadedEventArgs = {
       file: memoryStoredFile.buffer,
-      document
+      document,
     };
     this.eventEmitter.emitAsync(FileEventType.afterUploadAsync, eventArgs);
     this.eventEmitter.emit(FileEventType.afterUpload, eventArgs);
@@ -174,7 +174,7 @@ export class FileService implements OnApplicationBootstrap {
     args: {
       file?: string | Buffer;
       type: string;
-    }
+    },
   ): Promise<void> {
     const date = new Date();
     const split = args.type.split('/');
@@ -199,16 +199,16 @@ export class FileService implements OnApplicationBootstrap {
         : { size: buffer.length };
     await this.model.updateOne(
       {
-        _id: file
+        _id: file,
       },
       {
         $set: {
           name: fileName,
           size: stat.size,
           type: args.type,
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: new Date(),
+        },
+      },
     );
 
     // delete previous file
@@ -225,7 +225,7 @@ export class FileService implements OnApplicationBootstrap {
     file: Types.ObjectId,
     options?: {
       destination?: string;
-    }
+    },
   ) {
     options ??= {};
   }
@@ -238,12 +238,12 @@ export class FileService implements OnApplicationBootstrap {
       .find({
         expiresIn: {
           $gte: 0,
-          $lte: expires
-        }
+          $lte: expires,
+        },
       })
       .limit(500)
       .sort({
-        createdAt: 'asc'
+        createdAt: 'asc',
       });
     const worker = new Bottleneck({ maxConcurrent: 10 });
 
@@ -251,7 +251,7 @@ export class FileService implements OnApplicationBootstrap {
     await Promise.all(
       items.map((e) => {
         return worker.schedule(() => this.delete(e._id));
-      })
+      }),
     );
   }
 
@@ -266,14 +266,14 @@ export class FileService implements OnApplicationBootstrap {
 
     await this.model.updateOne(
       {
-        _id: id
+        _id: id,
       },
       {
         $set: {
           expiresIn:
-            typeof expiresIn === 'number' ? new Date(expiresIn) : expiresIn
-        }
-      }
+            typeof expiresIn === 'number' ? new Date(expiresIn) : expiresIn,
+        },
+      },
     );
   }
 }

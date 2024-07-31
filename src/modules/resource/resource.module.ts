@@ -6,6 +6,6 @@ import { ResourceService } from './resource.service';
   imports: [],
   controllers: [],
   providers: [ResourceService],
-  exports: [ResourceService]
+  exports: [ResourceService],
 })
 export class ResourceModule {}

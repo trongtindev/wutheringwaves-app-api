@@ -8,6 +8,6 @@ import { DiscordSchedule } from './discord.schedule';
   imports: [],
   controllers: [],
   providers: [DiscordService, DiscordEvents, DiscordSchedule],
-  exports: [DiscordService]
+  exports: [DiscordService],
 })
 export class DiscordModule {}

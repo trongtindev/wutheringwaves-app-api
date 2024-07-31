@@ -27,8 +27,8 @@ export default {
     'tbody',
     'thead',
     'figure',
-    'figcaption'
-  ]
+    'figcaption',
+  ],
 };
 
 export const POST_TITLE_LENGTH = [40, 160];

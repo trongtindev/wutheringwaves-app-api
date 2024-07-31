@@ -5,7 +5,7 @@ import { UserDecorator } from '../user/user.decorator';
 import { UserDocument } from '../user/user.schema';
 import {
   CreateTierListBodyDto,
-  GetListTierListQueryDto
+  GetListTierListQueryDto,
 } from './tier-list.dto';
 import { ICreateTierListResponse } from './tier-list.interface';
 import { Throttle } from '@nestjs/throttler';
@@ -20,7 +20,7 @@ export class TierListController {
       type: query.type,
       search: query.search,
       limit: query.limit,
-      offset: query.offset
+      offset: query.offset,
     });
 
     return {
@@ -28,22 +28,22 @@ export class TierListController {
       items: await Promise.all(
         result.items.map(async (element) => {
           return await this.tierListService.resolve(element);
-        })
-      )
+        }),
+      ),
     };
   }
 
   @Throttle({
     create: {
       ttl: 60000,
-      limit: 3
-    }
+      limit: 3,
+    },
   })
   @UseGuards(AuthGuard)
   @Post()
   async create(
     @UserDecorator() user: UserDocument,
-    @Body() body: CreateTierListBodyDto
+    @Body() body: CreateTierListBodyDto,
   ): Promise<ICreateTierListResponse> {
     console.log(user);
     const document = await this.tierListService.create(user, {
@@ -53,9 +53,9 @@ export class TierListController {
         return {
           label: e.label,
           color: e.color,
-          items: e.items
+          items: e.items,
         };
-      })
+      }),
     });
     return await this.tierListService.resolve(document);
   }

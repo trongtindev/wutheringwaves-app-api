@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
@@ -16,7 +16,7 @@ export class AuthGuard implements CanActivate {
 
   constructor(
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -55,7 +55,7 @@ export class AuthGuardNullable implements CanActivate {
 
   constructor(
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

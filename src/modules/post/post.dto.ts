@@ -12,13 +12,13 @@ import {
   IsArray,
   IsObject,
   IsDateString,
-  IsDate
+  IsDate,
 } from 'class-validator';
 import striptags from 'striptags';
 import config, {
   POST_CONTENT_LENGTH,
   POST_DESCRIPTION_LENGTH,
-  POST_TITLE_LENGTH
+  POST_TITLE_LENGTH,
 } from './post.config';
 import urlSlug from 'url-slug';
 import { QueryDto } from '@/app.dto';
@@ -74,7 +74,7 @@ export class PostCreateBodyDto {
   @IsString()
   @Length(POST_CONTENT_LENGTH[0], POST_CONTENT_LENGTH[1])
   @Transform(({ value }: TransformFnParams) =>
-    striptags(value, config.safeHTMLTags)
+    striptags(value, config.safeHTMLTags),
   )
   content: string;
 

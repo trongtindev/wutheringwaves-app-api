@@ -3,7 +3,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
-  OnApplicationBootstrap
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConveneStore, ConveneSummary } from './convene.schema';
@@ -13,7 +13,7 @@ import { ProxyService } from '../proxy/proxy.service';
 import { ConveneEventType } from './convene.types';
 import {
   IAfterImportConveneEventArgs,
-  IConveneHistory
+  IConveneHistory,
 } from './convene.interface';
 import Bottleneck from 'bottleneck';
 import axios from 'axios';
@@ -36,12 +36,12 @@ export class ConveneService implements OnApplicationBootstrap {
     @InjectModel(ConveneSummary.name)
     private conveneSummaryModel: Model<ConveneSummary>,
     private proxyService: ProxyService,
-    private resourceService: ResourceService
+    private resourceService: ResourceService,
   ) {}
 
   onApplicationBootstrap() {
     const api = axios.create({
-      baseURL: process.env.SITE_URL
+      baseURL: process.env.SITE_URL,
     });
     axiosRetry(api, {
       retries: 99,
@@ -49,7 +49,7 @@ export class ConveneService implements OnApplicationBootstrap {
         this.logger.warn(`onRetry(${retryCount}) ${error} ${config.url}`);
       },
       retryCondition: () => true,
-      retryDelay: (count) => count * 1000
+      retryDelay: (count) => count * 1000,
     });
 
     // this.initialize();
@@ -70,7 +70,7 @@ export class ConveneService implements OnApplicationBootstrap {
     args: {
       userAgent: string;
       skipMerge?: boolean;
-    }
+    },
   ) {
     this.logger.verbose(`import(${url})`);
 
@@ -98,7 +98,7 @@ export class ConveneService implements OnApplicationBootstrap {
             Origin: 'https://aki-gm-resources-oversea.aki-game.net',
             Priority: 'u=1, i',
             Referer: 'https://aki-gm-resources-oversea.aki-game.net/',
-            'User-Agent': args.userAgent
+            'User-Agent': args.userAgent,
           },
           body: {
             cardPoolId: resources_id,
@@ -106,9 +106,9 @@ export class ConveneService implements OnApplicationBootstrap {
             languageCode: lang,
             playerId: player_id,
             recordId: record_id,
-            serverId: svr_id
-          }
-        }
+            serverId: svr_id,
+          },
+        },
       );
 
       const data: IConveneHistory[] = JSON.parse(response.data.text).data;
@@ -127,14 +127,14 @@ export class ConveneService implements OnApplicationBootstrap {
 
         const [name, resourceType] = (() => {
           const character = this.resourceService.characters.find(
-            (e) => e.id === convene.resourceId
+            (e) => e.id === convene.resourceId,
           );
           if (character) {
             return [character.name, 'Resonator'];
           }
 
           const weapon = this.resourceService.weapons.find(
-            (e) => e.id === convene.resourceId
+            (e) => e.id === convene.resourceId,
           );
           if (weapon) {
             return [weapon.name, 'Weapon'];
@@ -145,7 +145,7 @@ export class ConveneService implements OnApplicationBootstrap {
 
         if (!name || !resourceType) {
           this.logger.warn(
-            `import() not found ${convene.resourceId} in ${convene.resourceType}`
+            `import() not found ${convene.resourceId} in ${convene.resourceType}`,
           );
         }
 
@@ -154,7 +154,7 @@ export class ConveneService implements OnApplicationBootstrap {
           time: convene.time,
           resourceId: convene.resourceId,
           resourceType: resourceType || convene.resourceType,
-          qualityLevel: convene.qualityLevel
+          qualityLevel: convene.qualityLevel,
         };
       }) as IConveneHistory[];
     };
@@ -163,7 +163,7 @@ export class ConveneService implements OnApplicationBootstrap {
         return worker.schedule(() => {
           return handle(cardPoolType + 1);
         });
-      })
+      }),
     );
 
     // store
@@ -171,20 +171,20 @@ export class ConveneService implements OnApplicationBootstrap {
       { playerId: parseInt(player_id) },
       {
         $set: {
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       },
       {
-        upsert: true
-      }
+        upsert: true,
+      },
     );
     const store = await this.conveneStoreModel.findOne({
-      playerId: parseInt(player_id)
+      playerId: parseInt(player_id),
     });
 
     // merge
     const items: IConveneHistory[][] = Array.from(Array(7).keys()).map(
-      () => []
+      () => [],
     );
     for (let i = 0; i < 7; i += 1) {
       let mergeEnd = 0;
@@ -215,7 +215,7 @@ export class ConveneService implements OnApplicationBootstrap {
       } else {
         items[i] = [
           ...chunks[i].slice(0, mergeEnd),
-          ...(store.items.length - 1 >= i ? store.items[i] : [])
+          ...(store.items.length - 1 >= i ? store.items[i] : []),
         ];
       }
     }
@@ -226,20 +226,20 @@ export class ConveneService implements OnApplicationBootstrap {
       {
         $set: {
           serverId: svr_id,
-          items
-        }
-      }
+          items,
+        },
+      },
     );
 
     // emit event
     const eventArgs: IAfterImportConveneEventArgs = {
       playerId: parseInt(player_id),
       serverId: svr_id,
-      items
+      items,
     };
     await this.eventEmitter.emitAsync(
       ConveneEventType.afterImportAsync,
-      eventArgs
+      eventArgs,
     );
     this.eventEmitter.emit(ConveneEventType.afterImport, eventArgs);
 
@@ -251,12 +251,12 @@ export class ConveneService implements OnApplicationBootstrap {
           return items[key].map((convene: IConveneHistory) => {
             return {
               ...convene,
-              cardPoolType: parseInt(key) + 1
+              cardPoolType: parseInt(key) + 1,
             };
           });
         })
         .flatMap((e) => e),
-      total: Object.keys(items).reduce((prev, e) => items[e].length + prev, 0)
+      total: Object.keys(items).reduce((prev, e) => items[e].length + prev, 0),
     };
   }
 
@@ -278,7 +278,7 @@ export class ConveneService implements OnApplicationBootstrap {
         featured?: string[];
       }[]
     >('/api/resources/banners', {
-      baseURL: process.env.SITE_URL
+      baseURL: process.env.SITE_URL,
     });
     const pullData: {
       [key: string]: number;
@@ -328,8 +328,8 @@ export class ConveneService implements OnApplicationBootstrap {
       const stores = await this.conveneStoreModel
         .find({
           updatedAt: {
-            $lte: new Date()
-          }
+            $lte: new Date(),
+          },
         })
         .limit(pageSize)
         .skip(offset);
@@ -357,11 +357,11 @@ export class ConveneService implements OnApplicationBootstrap {
           for (const convene of element.items[i]) {
             const conveneName = (() => {
               const character = this.resourceService.characters.find(
-                (e) => e.id === convene.resourceId
+                (e) => e.id === convene.resourceId,
               );
               if (character) return character.name;
               const weapon = this.resourceService.weapons.find(
-                (e) => e.id === convene.resourceId
+                (e) => e.id === convene.resourceId,
               );
               if (weapon) return weapon.name;
               return convene.name;
@@ -389,7 +389,7 @@ export class ConveneService implements OnApplicationBootstrap {
 
             if (matchBanners.length === 0) {
               this.logger.verbose(
-                `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`
+                `globalStatsCalculate not found banner for ${convene.name} ${convene.time}`,
               );
               continue;
             }
@@ -404,14 +404,14 @@ export class ConveneService implements OnApplicationBootstrap {
               avgPity: Array.from(Array(90).keys()).map(() => {
                 return {
                   chance: 0,
-                  totalPull: 0
+                  totalPull: 0,
                 };
               }),
               pullByDay: {},
               fiveStarList: {},
               fiveStarWinRate: {},
               fourStarList: {},
-              fourStarWinRate: {}
+              fourStarWinRate: {},
             };
 
             // winRateOff
@@ -428,7 +428,7 @@ export class ConveneService implements OnApplicationBootstrap {
             // totalUsers
             if (
               !summaryData[matchBanner.name].totalUsers.includes(
-                element.playerId
+                element.playerId,
               )
             ) {
               summaryData[matchBanner.name].totalUsers.push(element.playerId);
@@ -437,7 +437,7 @@ export class ConveneService implements OnApplicationBootstrap {
             // avgRc
             if (convene.qualityLevel >= 4) {
               summaryData[matchBanner.name].avgRc[convene.name] ??= Array.from(
-                Array(8).keys()
+                Array(8).keys(),
               ).map(() => {
                 return 0;
               });
@@ -478,7 +478,7 @@ export class ConveneService implements OnApplicationBootstrap {
               // fiveStarList
               summaryData[matchBanner.name].fiveStarList[convene.name] ??= {
                 total: 0,
-                resourceType: convene.resourceType
+                resourceType: convene.resourceType,
               };
               summaryData[matchBanner.name].fiveStarList[convene.name].total +=
                 1;
@@ -500,7 +500,7 @@ export class ConveneService implements OnApplicationBootstrap {
               // fourStarList
               summaryData[matchBanner.name].fourStarList[convene.name] ??= {
                 total: 0,
-                resourceType: convene.resourceType
+                resourceType: convene.resourceType,
               };
               summaryData[matchBanner.name].fourStarList[convene.name].total +=
                 1;
@@ -561,18 +561,18 @@ export class ConveneService implements OnApplicationBootstrap {
           (previous, e) => {
             return summary.fiveStarList[e].total + previous;
           },
-          0
+          0,
         );
         const totalFourStar = Object.keys(summary.fourStarList).reduce(
           (previous, e) => {
             return summary.fourStarList[e].total + previous;
           },
-          0
+          0,
         );
 
         await this.conveneSummaryModel.updateOne(
           {
-            banner
+            banner,
           },
           {
             cardPoolType: summary.cardPoolType,
@@ -590,27 +590,27 @@ export class ConveneService implements OnApplicationBootstrap {
                   e.totalPull /
                   (summary.avgPity.reduce(
                     (prev, value) => value.totalPull + prev,
-                    0
+                    0,
                   ) /
                     summary.avgPity.length),
-                totalPull: e.totalPull
+                totalPull: e.totalPull,
               };
             }),
             avgRc: Object.keys(summary.avgRc)
               .map((key) => {
                 return {
                   item: key,
-                  stacks: summary.avgRc[key]
+                  stacks: summary.avgRc[key],
                 };
               })
               .sort((a, b) => {
                 const totalA = a.stacks.reduce(
                   (prev, value) => value + prev,
-                  0
+                  0,
                 );
                 const totalB = b.stacks.reduce(
                   (prev, value) => value + prev,
-                  0
+                  0,
                 );
                 return totalB - totalA;
               }),
@@ -622,7 +622,7 @@ export class ConveneService implements OnApplicationBootstrap {
                   item: key,
                   total: summary.fiveStarList[key].total,
                   resourceType: summary.fiveStarList[key].resourceType,
-                  percentage: parseFloat(percentage.toFixed(2))
+                  percentage: parseFloat(percentage.toFixed(2)),
                 };
               })
               .sort((a, b) => {
@@ -639,7 +639,7 @@ export class ConveneService implements OnApplicationBootstrap {
                   item: key,
                   total: summary.fourStarList[key].total,
                   percentage: parseFloat(percentage.toFixed(2)),
-                  resourceType: summary.fourStarList[key].resourceType
+                  resourceType: summary.fourStarList[key].resourceType,
                 };
               })
               .sort((a, b) => {
@@ -652,19 +652,19 @@ export class ConveneService implements OnApplicationBootstrap {
               .map((e) => {
                 return {
                   time: e,
-                  total: summary.pullByDay[e]
+                  total: summary.pullByDay[e],
                 };
               })
               .sort((a, b) => {
                 return b.total - a.total;
               }),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           {
-            upsert: true
-          }
+            upsert: true,
+          },
         );
-      })
+      }),
     );
 
     const pullDataFile = path.resolve(this.tempData, 'pullData.json');
@@ -673,8 +673,8 @@ export class ConveneService implements OnApplicationBootstrap {
       JSON.stringify(
         Object.keys(pullData).map((e) => {
           return [parseFloat(e), pullData[e]];
-        })
-      )
+        }),
+      ),
     );
 
     const luckinessDataFile = path.resolve(this.tempData, 'luckinessData.json');
@@ -686,8 +686,8 @@ export class ConveneService implements OnApplicationBootstrap {
         }),
         fourStar: Object.keys(luckinessFourStarData).map((e) => {
           return [parseFloat(e), luckinessFourStarData[e]];
-        })
-      })
+        }),
+      }),
     );
   }
 

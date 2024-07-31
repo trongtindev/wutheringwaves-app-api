@@ -5,7 +5,7 @@ import { Queue } from 'bull';
 import { FileEventType } from './file.types';
 import {
   IFileQueueOptimizeJob,
-  IFileUploadedEventArgs
+  IFileUploadedEventArgs,
 } from './file.interface';
 import fs from 'fs';
 import path from 'path';
@@ -31,16 +31,16 @@ export class FileEvents implements OnApplicationBootstrap {
 
     const tempFile = path.resolve(
       this.tempJobFileDir,
-      `${args.document.id}_${args.document.name}`
+      `${args.document.id}_${args.document.name}`,
     );
     fs.writeFileSync(tempFile, args.file);
 
     const jobData: IFileQueueOptimizeJob = {
       _id: args.document._id,
-      file: tempFile
+      file: tempFile,
     };
     await this.fileQueue.add('optimize', jobData, {
-      delay: 60 * 5 * 1000
+      delay: 60 * 5 * 1000,
     });
   }
 }

@@ -59,33 +59,33 @@ assert(MONGO_PASS);
       {
         dbName: MONGO_NAME,
         autoIndex: true,
-        autoCreate: true
-      }
+        autoCreate: true,
+      },
     ),
     CacheModule.register<RedisClientOptions>({
       isGlobal: true,
       store: redisStore,
       socket: {
         port: parseInt(REDIS_PORT),
-        host: process.env.REDIS_HOST
+        host: process.env.REDIS_HOST,
       },
       username: REDIS_USER,
-      password: REDIS_PASS
+      password: REDIS_PASS,
     }),
     ThrottlerModule.forRoot([
       {
         name: 'default',
         ttl: 10000,
-        limit: 50
-      }
+        limit: 50,
+      },
     ]),
     BullModule.forRoot({
       redis: {
         host: REDIS_HOST,
         port: parseInt(REDIS_PORT),
         username: REDIS_USER,
-        password: REDIS_PASS
-      }
+        password: REDIS_PASS,
+      },
     }),
     // custom modules
     AuthModule,
@@ -102,13 +102,13 @@ assert(MONGO_PASS);
     AIModule,
     ResourceModule,
     DiscordModule,
-    GithubModule
+    GithubModule,
   ],
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard
-    }
-  ]
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

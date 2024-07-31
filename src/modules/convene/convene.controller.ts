@@ -12,7 +12,7 @@ export class ConveneController {
   async import(@Body() body: ImportConveneBodyDto) {
     return await this.conveneService.import(body.url, {
       userAgent: body.userAgent,
-      skipMerge: body.skipMerge
+      skipMerge: body.skipMerge,
     });
   }
 

@@ -1,6 +1,6 @@
 import {
   Injectable,
-  CanActivate
+  CanActivate,
   // , ExecutionContext
 } from '@nestjs/common';
 import { Observable } from 'rxjs';

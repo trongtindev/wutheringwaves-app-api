@@ -15,7 +15,7 @@ export class TierListService {
   constructor(
     private eventEmitter: EventEmitter2,
     @InjectModel(TierList.name) private tierListModel: Model<TierList>,
-    private userService: UserService
+    private userService: UserService,
   ) {}
 
   async resolve(document: TierListDocument): Promise<ITierList> {
@@ -27,7 +27,7 @@ export class TierListService {
       title: document.title,
       content: document.content,
       updatedAt: document.updatedAt,
-      createdAt: document.createdAt
+      createdAt: document.createdAt,
     };
   }
 
@@ -45,7 +45,7 @@ export class TierListService {
     const filter: any = {};
     if (query.search) {
       filter.$text = {
-        $search: query.search
+        $search: query.search,
       };
     }
 
@@ -55,7 +55,7 @@ export class TierListService {
       .limit(query.limit)
       .skip(query.offset)
       .sort({
-        createdAt: 'desc'
+        createdAt: 'desc',
       });
 
     return { total, items };
@@ -71,13 +71,13 @@ export class TierListService {
         items: string[];
         color: string;
       }[];
-    }
+    },
   ): Promise<TierListDocument> {
     return await this.tierListModel.create({
       user: user._id,
       type: args.type,
       title: args.title,
-      content: JSON.stringify(args.rows)
+      content: JSON.stringify(args.rows),
     });
   }
 
@@ -85,6 +85,6 @@ export class TierListService {
     id: Types.ObjectId,
     args?: {
       user?: Types.ObjectId;
-    }
+    },
   ) {}
 }

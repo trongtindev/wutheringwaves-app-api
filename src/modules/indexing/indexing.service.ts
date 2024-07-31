@@ -25,7 +25,7 @@ export class IndexingService implements OnApplicationBootstrap {
   constructor(
     private eventEmitter: EventEmitter2,
     @InjectModel(IndexingUrl.name)
-    private urlModel: Model<IndexingUrl>
+    private urlModel: Model<IndexingUrl>,
   ) {
     const key = JSON.parse(process.env.GOOGLE_ACCOUNT_KEY);
     const jwtClient = new google.auth.JWT(
@@ -33,17 +33,17 @@ export class IndexingService implements OnApplicationBootstrap {
       null,
       key.private_key,
       ['https://www.googleapis.com/auth/indexing'],
-      null
+      null,
     );
 
     this.indexNow = axios.create({
-      baseURL: 'https://api.indexnow.org'
+      baseURL: 'https://api.indexnow.org',
     });
     this.googleapis = axios.create({
       baseURL: 'https://indexing.googleapis.com/v3',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
     this.googleapis.interceptors.request.use(async (config) => {
       this.googleJwtToken ??= await jwtClient.authorize();
@@ -64,7 +64,7 @@ export class IndexingService implements OnApplicationBootstrap {
         }
 
         throw error;
-      }
+      },
     );
   }
 
@@ -81,11 +81,11 @@ export class IndexingService implements OnApplicationBootstrap {
   async updateUrls() {
     const exclude = ['trophies'];
     const request = axios.create({
-      baseURL: process.env.SITE_URL
+      baseURL: process.env.SITE_URL,
     });
     axiosRetry(request, {
       retries: 99,
-      retryCondition: () => true
+      retryCondition: () => true,
     });
 
     try {
@@ -93,14 +93,14 @@ export class IndexingService implements OnApplicationBootstrap {
 
       const parser = new XMLParser();
       const worker = new Bottleneck({
-        maxConcurrent: process.env.NODE_ENV !== 'development' ? 3 : 1
+        maxConcurrent: process.env.NODE_ENV !== 'development' ? 3 : 1,
       });
       const sitemap = await request.get('sitemap.xml');
       const sitemapParse = parser.parse(sitemap.data);
       const sitemapUrls: string[] = sitemapParse.sitemapindex.sitemap.map(
         (e: any) => {
           return e.loc;
-        }
+        },
       );
       const urls: {
         loc: string;
@@ -119,11 +119,11 @@ export class IndexingService implements OnApplicationBootstrap {
               .forEach((e) => {
                 urls.push({
                   loc: e.loc,
-                  lastmod: e.lastmod
+                  lastmod: e.lastmod,
                 });
               });
           });
-        })
+        }),
       );
 
       await this.urlModel.bulkWrite(
@@ -142,14 +142,14 @@ export class IndexingService implements OnApplicationBootstrap {
                 update: {
                   $set: {
                     updatedAt: new Date(),
-                    lastModified: url.lastmod
+                    lastModified: url.lastmod,
                   },
-                  $setOnInsert: { url: url.loc }
+                  $setOnInsert: { url: url.loc },
                 },
-                upsert: true
-              }
+                upsert: true,
+              },
             };
-          })
+          }),
       );
 
       this.logger.log(`fetchUrls()... done (${urls.length})`);
@@ -168,8 +168,8 @@ export class IndexingService implements OnApplicationBootstrap {
     const docs = await this.urlModel
       .find({
         $expr: {
-          $gte: ['$lastModified', '$nowSubmittedAt']
-        }
+          $gte: ['$lastModified', '$nowSubmittedAt'],
+        },
       })
       .limit(this.testMode ? 1 : 1000);
     if (docs.length === 0) return;
@@ -179,7 +179,7 @@ export class IndexingService implements OnApplicationBootstrap {
       host: INDEXNOW_HOST,
       key: INDEXNOW_KEY,
       keyLocation: INDEXNOW_KEY_LOCATION,
-      urlList: docs.map((e) => e.url)
+      urlList: docs.map((e) => e.url),
     });
     this.logger.log(`nowSubmitUrls() ${docs.length} => ${result.status}`);
 
@@ -191,12 +191,12 @@ export class IndexingService implements OnApplicationBootstrap {
               filter: { _id: doc._id },
               update: {
                 $set: {
-                  nowSubmittedAt: new Date()
-                }
-              }
-            }
+                  nowSubmittedAt: new Date(),
+                },
+              },
+            },
           };
-        })
+        }),
       );
       this.logger.log(`nowSubmitUrls() writes: ${writes.modifiedCount}`);
     }
@@ -204,7 +204,7 @@ export class IndexingService implements OnApplicationBootstrap {
 
   async googleSubmitUrl(
     doc: IndexingUrlDocument,
-    onDone?: () => Promise<void> | void
+    onDone?: () => Promise<void> | void,
   ) {
     if (this.googleSubmitNextTime > new Date()) {
       return;
@@ -214,26 +214,26 @@ export class IndexingService implements OnApplicationBootstrap {
       '/urlNotifications:publish',
       {
         url: doc.url,
-        type: 'URL_UPDATED'
+        type: 'URL_UPDATED',
       },
       {
         validateStatus: () => {
           return true;
-        }
-      }
+        },
+      },
     );
 
     this.logger.log(`submitGoogle() ${doc.url} => ${result.status}`);
     if (result.status >= 200 && result.status <= 299) {
       await this.urlModel.updateOne(
         {
-          url: doc.url
+          url: doc.url,
         },
         {
           $set: {
-            googleSubmitted: true
-          }
-        }
+            googleSubmitted: true,
+          },
+        },
       );
       if (onDone) await onDone();
     } else if (result.status === 429) {
@@ -253,12 +253,12 @@ export class IndexingService implements OnApplicationBootstrap {
     const docs = await this.urlModel
       .find({
         $expr: {
-          $gte: ['$lastModified', '$googleSubmittedAt']
-        }
+          $gte: ['$lastModified', '$googleSubmittedAt'],
+        },
       })
       .limit(this.testMode ? 1 : 100)
       .sort({
-        lastModified: 'desc'
+        lastModified: 'desc',
       });
     const worker = new Bottleneck({ maxConcurrent: 3 });
 
@@ -268,17 +268,17 @@ export class IndexingService implements OnApplicationBootstrap {
           return this.googleSubmitUrl(doc, () => {
             this.urlModel.updateOne(
               {
-                _id: doc._id
+                _id: doc._id,
               },
               {
                 $set: {
-                  googleSubmittedAt: new Date()
-                }
-              }
+                  googleSubmittedAt: new Date(),
+                },
+              },
             );
           });
         });
-      })
+      }),
     );
 
     this.logger.log(`googleSubmitUrls() done (${docs.length})`);

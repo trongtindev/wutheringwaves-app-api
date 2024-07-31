@@ -8,6 +8,6 @@ import { GithubController } from './github.controller';
   imports: [],
   controllers: [GithubController],
   providers: [GithubService, GithubEvents],
-  exports: [GithubService]
+  exports: [GithubService],
 })
 export class GithubModule {}

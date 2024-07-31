@@ -4,6 +4,6 @@ export const isImage = (type: string) => {
     'image/png',
     'image/jpg',
     'image/jpeg',
-    'image/webp'
+    'image/webp',
   ].includes(type);
 };

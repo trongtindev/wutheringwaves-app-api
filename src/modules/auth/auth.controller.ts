@@ -12,7 +12,7 @@ export class AuthController {
   async signIn(@Body() body: AuthSignInBodyDto) {
     return await this.authService.signIn({
       code: body.code,
-      idToken: body.idToken
+      idToken: body.idToken,
     });
   }
 

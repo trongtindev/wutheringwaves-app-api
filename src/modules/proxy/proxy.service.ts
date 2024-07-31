@@ -11,18 +11,18 @@ export class ProxyService {
   constructor(private eventEmitter: EventEmitter2) {
     this.worker = axios.create({
       baseURL: process.env.PROXY_WORKER_URL,
-      timeout: 10000
+      timeout: 10000,
     });
     axiosRetry(this.worker, {
       onRetry: (retryCount, error) => {
         this.logger.warn(`worker ${retryCount} ${error} `);
-      }
+      },
     });
   }
 
   async useWorker(
     url: string,
-    args: { method?: 'get' | 'post'; body?: any; headers: any }
+    args: { method?: 'get' | 'post'; body?: any; headers: any },
   ) {
     if (process.env.NODE_ENV === 'development') {
       const http = axios.create();
@@ -30,13 +30,13 @@ export class ProxyService {
         method: args.method || 'get',
         data: args.body,
         headers: args.headers,
-        responseType: 'text'
+        responseType: 'text',
       });
       return {
         data: {
           text: response.data,
-          status: response.status
-        }
+          status: response.status,
+        },
       };
     }
     return await this.worker.post<{
@@ -47,7 +47,7 @@ export class ProxyService {
       url,
       method: args.method ?? 'get',
       headers: args.headers,
-      body: args.body
+      body: args.body,
     });
   }
 }

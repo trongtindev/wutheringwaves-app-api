@@ -7,7 +7,7 @@ import {
   NotFoundException,
   Param,
   Post,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { FormDataRequest } from 'nestjs-form-data';
 import { AuthGuard } from '../auth/auth.guard';
@@ -27,15 +27,15 @@ export class FileController {
   @Throttle({
     default: {
       ttl: 60000,
-      limit: 5
-    }
+      limit: 5,
+    },
   })
   @UseGuards(AuthGuard)
   @FormDataRequest()
   @Post()
   async upload(
     @Body() body: UploadFileBodyDto,
-    @UserDecorator() user: UserDocument
+    @UserDecorator() user: UserDocument,
   ): Promise<IFile | IFile[]> {
     if (body.file) {
       // single file
@@ -46,12 +46,12 @@ export class FileController {
       const results = await Promise.all(
         body.files.map(async (element) => {
           return await this.fileService.upload(user, element);
-        })
+        }),
       );
       return await Promise.all(
         results.map(async (element) => {
           return await this.fileService.resolve(element);
-        })
+        }),
       );
     }
     throw new BadRequestException();
@@ -61,7 +61,7 @@ export class FileController {
   @Delete(':id')
   async delete(
     @Param() param: FileIdParam,
-    @UserDecorator() user: UserDocument
+    @UserDecorator() user: UserDocument,
   ) {
     const id = new Types.ObjectId(param.id);
     const file = await this.fileService.get(id);

@@ -2,14 +2,14 @@ import {
   ValidateIf,
   ArrayMinSize,
   ArrayMaxSize,
-  IsMongoId
+  IsMongoId,
 } from 'class-validator';
 import {
   IsFile,
   MinFileSize,
   MaxFileSize,
   HasMimeType,
-  MemoryStoredFile
+  MemoryStoredFile,
 } from 'nestjs-form-data';
 
 export class UploadFileBodyDto {
@@ -26,7 +26,7 @@ export class UploadFileBodyDto {
   @MinFileSize(1024, { each: true })
   @MaxFileSize(1024 * 1024 * 10, { each: true })
   @HasMimeType(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'], {
-    each: true
+    each: true,
   })
   @ValidateIf((object, value) => typeof value !== 'undefined')
   files?: MemoryStoredFile[];

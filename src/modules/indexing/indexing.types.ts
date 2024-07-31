@@ -1,3 +1,3 @@
 export enum IndexingEventType {
-  urlsUpdated = 'indexing.urlsUpdated'
+  urlsUpdated = 'indexing.urlsUpdated',
 }

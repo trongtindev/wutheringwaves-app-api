@@ -22,16 +22,16 @@ export class FileQueues {
     // convert to webp
     const newFile = await sharp(job.data.file)
       .webp({
-        quality: 85
+        quality: 85,
       })
       .toBuffer();
 
     this.logger.verbose(
-      `optimize(${job.data._id})... result: ${stat.size} => ${newFile.length}`
+      `optimize(${job.data._id})... result: ${stat.size} => ${newFile.length}`,
     );
     await this.fileService.update(job.data._id, {
       file: newFile,
-      type: 'image/webp'
+      type: 'image/webp',
     });
 
     fs.unlinkSync(job.data.file);
