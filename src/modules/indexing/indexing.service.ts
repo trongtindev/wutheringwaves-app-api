@@ -26,8 +26,20 @@ export class IndexingService implements OnApplicationBootstrap {
     private eventEmitter: EventEmitter2,
     @InjectModel(IndexingUrl.name)
     private urlModel: Model<IndexingUrl>
-  ) {
-    const key = JSON.parse(process.env.GOOGLE_ACCOUNT_KEY);
+  ) {}
+
+  onApplicationBootstrap() {
+    if (process.env.NODE_ENV === 'development') {
+      if (process.env.INDEXING_TEST !== 'true') {
+        this.logger.warn(`onApplicationBootstrap() skip indexing.`);
+        return;
+      }
+    }
+
+    const { GOOGLE_ACCOUNT_KEY } = process.env;
+    assert(GOOGLE_ACCOUNT_KEY);
+
+    const key = JSON.parse(GOOGLE_ACCOUNT_KEY);
     const jwtClient = new google.auth.JWT(
       key.client_email,
       null,
@@ -66,15 +78,7 @@ export class IndexingService implements OnApplicationBootstrap {
         throw error;
       }
     );
-  }
 
-  onApplicationBootstrap() {
-    if (process.env.NODE_ENV === 'development') {
-      if (process.env.INDEXING_TEST !== 'true') {
-        this.logger.warn(`onApplicationBootstrap() skip indexing.`);
-        return;
-      }
-    }
     this.updateUrls();
   }
 
