@@ -19,7 +19,7 @@ export class SyncController {
   constructor(private syncService: SyncService) {}
 
   @Throttle({
-    'sync.pull': {
+    syncPull: {
       limit: 10,
       ttl: 60000,
     },
@@ -36,7 +36,7 @@ export class SyncController {
   }
 
   @Throttle({
-    'sync.push': {
+    syncPush: {
       limit: 15,
       ttl: 60000,
     },
@@ -53,7 +53,7 @@ export class SyncController {
   }
 
   @Throttle({
-    'sync.erase': {
+    syncErase: {
       limit: 3,
       ttl: 60000,
     },

@@ -46,12 +46,12 @@ export class CommentController {
     };
   }
 
-  // @Throttle({
-  //   default: {
-  //     ttl: 60 * 15 * 1000,
-  //     limit: 10,
-  //   },
-  // })
+  @Throttle({
+    comment: {
+      ttl: 60 * 15 * 1000,
+      limit: 10,
+    },
+  })
   @UseGuards(AuthGuard)
   @Post()
   async createComment(
@@ -87,7 +87,7 @@ export class CommentController {
   ) {}
 
   @Throttle({
-    default: {
+    commentReport: {
       ttl: 60000,
       limit: 2,
     },

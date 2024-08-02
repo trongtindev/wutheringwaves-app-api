@@ -25,7 +25,7 @@ export class FileController {
   constructor(private fileService: FileService) {}
 
   @Throttle({
-    default: {
+    upload: {
       ttl: 60000,
       limit: 5,
     },

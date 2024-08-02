@@ -85,7 +85,7 @@ export class PostController {
   }
 
   @Throttle({
-    'post.create': {
+    postCreate: {
       ttl: 60000 * 30,
       limit: 10,
     },
@@ -150,7 +150,7 @@ export class PostController {
   }
 
   @Throttle({
-    'post.update': {
+    postUpdate: {
       ttl: 60000 * 30,
       limit: 5,
     },

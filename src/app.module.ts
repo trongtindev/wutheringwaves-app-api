@@ -2,7 +2,7 @@ import assert from 'assert';
 import dotenv from 'dotenv';
 
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
+import { Module, Request } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -76,7 +76,16 @@ assert(MONGO_PASS);
       {
         name: 'default',
         ttl: 10000,
-        limit: 50,
+        limit: 100,
+        skipIf: (context) => {
+          const http = context.switchToHttp();
+          const request = http.getRequest<{ headers: any }>();
+          const secret = request.headers.auth_secret;
+          if (secret && secret === process.env.AUTH_SECRET) {
+            return true;
+          }
+          return false;
+        },
       },
     ]),
     BullModule.forRoot({

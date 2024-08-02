@@ -34,7 +34,7 @@ export class TierListController {
   }
 
   @Throttle({
-    create: {
+    tierListCreate: {
       ttl: 60000,
       limit: 3,
     },
