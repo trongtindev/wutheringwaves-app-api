@@ -25,7 +25,7 @@ export class GithubController {
     @Body() body: GithubCommitBodyDto,
   ) {
     const content = await prettier.format(body.data, {
-      endOfLine: 'crlf',
+      endOfLine: 'lf',
       parser: 'json',
       plugins: [prettierSortJson],
     });
