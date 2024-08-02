@@ -86,6 +86,13 @@ export class CommentService {
         if (!this.resourceService.weapons.find((e) => e.slug === keyValue)) {
           throw new BadRequestException();
         }
+      } else if (keyName === 'mapPin') {
+        const id = parseInt(keyValue);
+        if (!this.resourceService.mapPins.find((e) => e.id === id)) {
+          throw new BadRequestException(`not_found_map_pin`);
+        }
+      } else {
+        throw new BadRequestException('invalid-channel');
       }
     }
 
@@ -102,7 +109,7 @@ export class CommentService {
     },
   ) {
     options ??= {};
-    options.limit ??= 10;
+    options.limit ??= 50;
     options.offset ??= 0;
 
     const channel = await this.upsertChannel(url);
@@ -133,6 +140,7 @@ export class CommentService {
       content: string;
       parent?: Types.ObjectId;
       attachments?: Types.ObjectId[];
+      schedule?: Date;
     },
   ): Promise<CommentDocument> {
     if (args.attachments) {
@@ -157,6 +165,7 @@ export class CommentService {
       user,
       content: args.content,
       attachments: args.attachments,
+      createdAt: args.schedule || new Date(),
     });
 
     if (args.parent) {

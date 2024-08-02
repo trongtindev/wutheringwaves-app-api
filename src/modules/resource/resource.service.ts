@@ -6,9 +6,11 @@ import {
   ICharacter,
   IEcho,
   IItem,
+  IMapPin,
   ITrophy,
   IWeapon,
 } from './resource.interface';
+import fs from 'fs';
 
 @Injectable()
 export class ResourceService implements OnApplicationBootstrap {
@@ -19,6 +21,7 @@ export class ResourceService implements OnApplicationBootstrap {
   public items: IItem[] = [];
   public trophies: ITrophy[] = [];
   public weapons: IWeapon[] = [];
+  public mapPins: IMapPin[] = [];
 
   constructor(private eventEmitter: EventEmitter2) {
     this.request = axios.create({
@@ -78,12 +81,27 @@ export class ResourceService implements OnApplicationBootstrap {
       this.logger.log(`loadWeapons() ${this.weapons.length}`);
     };
 
+    const loadMapPins = async () => {
+      const pins: any[][] = JSON.parse(
+        fs.readFileSync('./resources/markers.json', 'utf-8'),
+      );
+      this.mapPins = pins.map((e) => {
+        return {
+          id: e[0],
+          type: e[1],
+          lat: e[2],
+          lng: e[3],
+        };
+      });
+    };
+
     await Promise.all([
       loadCharacters(),
       loadEchoes(),
       loadItems(),
       loadTrophies(),
       loadWeapons(),
+      loadMapPins(),
     ]);
   }
 }

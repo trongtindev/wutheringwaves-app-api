@@ -27,3 +27,10 @@ export interface IWeapon {
   slug: string;
   name: string;
 }
+
+export interface IMapPin {
+  id: number;
+  type: string;
+  lng: number;
+  lat: number;
+}

@@ -1,6 +1,13 @@
 import { QueryDto } from '@/app.dto';
-import { Transform, TransformFnParams } from 'class-transformer';
-import { IsMongoId, IsOptional, IsString, Length } from 'class-validator';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDate,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 import striptags from 'striptags';
 
 export class ListCommentQueryDto extends QueryDto {
@@ -30,7 +37,13 @@ export class CreateCommentBodyDto {
 
   @IsMongoId({ each: true })
   @IsOptional()
+  @IsArray()
   attachments?: string[];
+
+  @IsDate()
+  @Type(() => Date)
+  @IsOptional()
+  schedule: string;
 }
 
 export class UpdateCommentBodyDto {

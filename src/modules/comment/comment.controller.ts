@@ -46,12 +46,12 @@ export class CommentController {
     };
   }
 
-  @Throttle({
-    default: {
-      ttl: 60 * 15 * 1000,
-      limit: 10,
-    },
-  })
+  // @Throttle({
+  //   default: {
+  //     ttl: 60 * 15 * 1000,
+  //     limit: 10,
+  //   },
+  // })
   @UseGuards(AuthGuard)
   @Post()
   async createComment(
@@ -66,6 +66,7 @@ export class CommentController {
             return new Types.ObjectId(e);
           })
         : undefined,
+      schedule: body.schedule ? new Date(body.schedule) : undefined,
     });
     return await this.commentService.resolve(result);
   }
