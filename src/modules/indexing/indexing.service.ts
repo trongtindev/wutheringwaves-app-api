@@ -262,7 +262,7 @@ export class IndexingService implements OnApplicationBootstrap {
       })
       .limit(this.testMode ? 1 : 100)
       .sort({
-        lastModified: 'desc',
+        googleSubmittedAt: 'asc',
       });
     const worker = new Bottleneck({ maxConcurrent: 3 });
 

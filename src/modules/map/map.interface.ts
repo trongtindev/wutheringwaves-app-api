@@ -5,3 +5,7 @@ export interface IMarker {
   z: number;
   id: string;
 }
+
+export interface IMapPinSummary {
+  content?: string;
+}

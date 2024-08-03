@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -83,5 +84,17 @@ export class AuthGuardNullable implements CanActivate {
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
+  }
+}
+
+@Injectable()
+export class AuthGuardRoot implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<any>();
+    const secret = request.headers.auth_secret;
+    if (secret && secret === process.env.AUTH_SECRET) {
+      return true;
+    }
+    throw new ForbiddenException();
   }
 }
