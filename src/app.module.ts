@@ -2,7 +2,7 @@ import assert from 'assert';
 import dotenv from 'dotenv';
 
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module, Request } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
