@@ -95,6 +95,7 @@ export class AuthGuardRoot implements CanActivate {
     if (secret && secret === process.env.AUTH_SECRET) {
       return true;
     }
+    console.log(request.headers);
     throw new ForbiddenException();
   }
 }
