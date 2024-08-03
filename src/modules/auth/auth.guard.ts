@@ -91,7 +91,7 @@ export class AuthGuardNullable implements CanActivate {
 export class AuthGuardRoot implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<any>();
-    const secret = request.headers.auth_secret;
+    const secret = request.headers['auth-secret'];
     if (secret && secret === process.env.AUTH_SECRET) {
       return true;
     }
