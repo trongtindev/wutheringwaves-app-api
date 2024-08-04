@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, Types } from 'mongoose';
-import { IConveneHistory } from './convene.interface';
+import { IConvene } from './convene.interface';
 
 // convene_stores
 export type ConveneStoreDocument = HydratedDocument<ConveneStore>;
@@ -10,7 +10,7 @@ export class ConveneStore extends Document<Types.ObjectId> {
   playerId: number;
 
   @Prop({ required: true })
-  items: IConveneHistory[][];
+  items: IConvene[][];
 
   @Prop({ default: '86d52186155b148b5c138ceb41be9650' })
   serverId: string;

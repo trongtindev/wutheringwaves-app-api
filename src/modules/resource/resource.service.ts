@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import axios, { AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import {
+  IBanner,
   ICharacter,
   IEcho,
   IItem,
@@ -11,6 +12,7 @@ import {
   IWeapon,
 } from './resource.interface';
 import fs from 'fs';
+import { ResourceEventTypes } from './resource.types';
 
 @Injectable()
 export class ResourceService implements OnApplicationBootstrap {
@@ -22,6 +24,7 @@ export class ResourceService implements OnApplicationBootstrap {
   public trophies: ITrophy[] = [];
   public weapons: IWeapon[] = [];
   public mapPins: IMapPin[] = [];
+  public banners: IBanner[] = [];
 
   constructor(private eventEmitter: EventEmitter2) {
     this.request = axios.create({
@@ -37,8 +40,12 @@ export class ResourceService implements OnApplicationBootstrap {
     });
   }
 
-  async onApplicationBootstrap() {
-    this.logger.verbose(`onApplicationBootstrap()`);
+  onApplicationBootstrap() {
+    this.initialize().catch(this.logger.error);
+  }
+
+  async initialize() {
+    this.logger.verbose(`initialize()`);
 
     const loadCharacters = async () => {
       this.logger.log(`loadCharacters()`);
@@ -95,6 +102,15 @@ export class ResourceService implements OnApplicationBootstrap {
       });
     };
 
+    const loadBanners = async () => {
+      this.logger.log(`loadBanners()`);
+      const banners = await this.request.get<IBanner[]>(
+        '/api/resources/banners',
+      );
+      this.banners = banners.data;
+      this.logger.log(`loadBanners() ${this.banners.length}`);
+    };
+
     await Promise.all([
       loadCharacters(),
       loadEchoes(),
@@ -102,6 +118,8 @@ export class ResourceService implements OnApplicationBootstrap {
       loadTrophies(),
       loadWeapons(),
       loadMapPins(),
+      loadBanners(),
     ]);
+    this.eventEmitter.emit(ResourceEventTypes.initialized);
   }
 }

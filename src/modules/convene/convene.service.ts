@@ -11,10 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ProxyService } from '../proxy/proxy.service';
 import { ConveneEventType } from './convene.types';
-import {
-  IAfterImportConveneEventArgs,
-  IConveneHistory,
-} from './convene.interface';
+import { IAfterImportConveneEventArgs, IConvene } from './convene.interface';
 import Bottleneck from 'bottleneck';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
@@ -23,6 +20,8 @@ import fs from 'fs';
 import path from 'path';
 import { ResourceService } from '../resource/resource.service';
 import { timeOffsetIds } from './convene.config';
+import { CardPoolType } from '../resource/resource.interface';
+import { calculateWinRate } from './convene.utils';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
@@ -111,7 +110,7 @@ export class ConveneService implements OnApplicationBootstrap {
         },
       );
 
-      const data: IConveneHistory[] = JSON.parse(response.data.text).data;
+      const data: IConvene[] = JSON.parse(response.data.text).data;
       return data.map((convene) => {
         if (!convene.time) throw new BadGatewayException('missing field time');
         if (!convene.name) throw new BadGatewayException('missing field name');
@@ -156,7 +155,7 @@ export class ConveneService implements OnApplicationBootstrap {
           resourceType: resourceType || convene.resourceType,
           qualityLevel: convene.qualityLevel,
         };
-      }) as IConveneHistory[];
+      }) as IConvene[];
     };
     const chunks = await Promise.all(
       Array.from(Array(7).keys()).map((cardPoolType) => {
@@ -183,9 +182,7 @@ export class ConveneService implements OnApplicationBootstrap {
     });
 
     // merge
-    const items: IConveneHistory[][] = Array.from(Array(7).keys()).map(
-      () => [],
-    );
+    const items: IConvene[][] = Array.from(Array(7).keys()).map(() => []);
     for (let i = 0; i < 7; i += 1) {
       let mergeEnd = 0;
 
@@ -248,7 +245,7 @@ export class ConveneService implements OnApplicationBootstrap {
       serverId: svr_id,
       items: Object.keys(items)
         .map((key) => {
-          return items[key].map((convene: IConveneHistory) => {
+          return items[key].map((convene: IConvene) => {
             return {
               ...convene,
               cardPoolType: parseInt(key) + 1,
@@ -264,26 +261,14 @@ export class ConveneService implements OnApplicationBootstrap {
     this.logger.verbose(`globalStatsCalculate()`);
 
     const pageSize = 100;
+    const banners = this.resourceService.banners;
+
     let offset = 0;
 
-    const banners = await axios.get<
-      {
-        type: number;
-        name: string;
-        time?: {
-          start: string;
-          end: string;
-        };
-        featuredRare?: string;
-        featured?: string[];
-      }[]
-    >('/api/resources/banners', {
-      baseURL: process.env.SITE_URL,
-    });
     const pullData: {
       [key: string]: number;
     } = {};
-    const luckinessWinRateData: {
+    const luckinessData: {
       [key: string]: number;
     } = {};
     const luckinessFiveStarData: {
@@ -336,38 +321,39 @@ export class ConveneService implements OnApplicationBootstrap {
       if (stores.length === 0) break;
       offset += pageSize;
 
-      for (const element of stores) {
+      for (const store of stores) {
         const rcData: { [key: string]: number } = {};
-        const timeOffset = timeOffsetIds[element.serverId];
+        const timeOffset = timeOffsetIds[store.serverId];
         const totalFiveStar: { [key: string]: number } = {};
         const totalFourStar: { [key: string]: number } = {};
         const totalFiveStarWin: { [key: string]: number } = {};
         const totalFourStarWin: { [key: string]: number } = {};
         const totalWinRateOff: { [key: string]: number[] } = {};
-        const totalPulls = element.items
+        const totalPulls = store.items
           .map((e) => e.length)
           .reduce((prev, e) => prev + e, 0);
 
         pullData[`${totalPulls}`] ??= 0;
         pullData[`${totalPulls}`] += 1;
 
-        for (let i = 0; i < element.items.length; i += 1) {
+        for (let i = 0; i < store.items.length; i += 1) {
           const cardPoolType = i + 1;
+          const winRate =
+            cardPoolType === CardPoolType['featured-resonator']
+              ? calculateWinRate({
+                  type: cardPoolType,
+                  convenes: store.items[i],
+                  banners,
+                  timeOffset,
+                })
+              : undefined;
+          if (winRate) {
+            luckinessData[`${winRate}`] ??= 0;
+            luckinessData[`${winRate}`] += 1;
+          }
 
-          for (const convene of element.items[i]) {
-            const conveneName = (() => {
-              const character = this.resourceService.characters.find(
-                (e) => e.id === convene.resourceId,
-              );
-              if (character) return character.name;
-              const weapon = this.resourceService.weapons.find(
-                (e) => e.id === convene.resourceId,
-              );
-              if (weapon) return weapon.name;
-              return convene.name;
-            })();
-
-            const matchBanners = banners.data.filter((banner) => {
+          for (const convene of store.items[i]) {
+            const matchBanners = banners.filter((banner) => {
               if (banner.time) {
                 const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
                 const timeStart = dayjs(banner.time.start)
@@ -401,7 +387,7 @@ export class ConveneService implements OnApplicationBootstrap {
               totalUsers: [],
               winRateOff: {},
               avgRc: {},
-              avgPity: Array.from(Array(90).keys()).map(() => {
+              avgPity: Array.from(Array(80).keys()).map(() => {
                 return {
                   chance: 0,
                   totalPull: 0,
@@ -427,11 +413,9 @@ export class ConveneService implements OnApplicationBootstrap {
 
             // totalUsers
             if (
-              !summaryData[matchBanner.name].totalUsers.includes(
-                element.playerId,
-              )
+              !summaryData[matchBanner.name].totalUsers.includes(store.playerId)
             ) {
-              summaryData[matchBanner.name].totalUsers.push(element.playerId);
+              summaryData[matchBanner.name].totalUsers.push(store.playerId);
             }
 
             // avgRc
@@ -466,8 +450,8 @@ export class ConveneService implements OnApplicationBootstrap {
             // avgPity
             if (convene.qualityLevel === 5) {
               let pity = 1;
-              for (let j = i + 1; j < element.items[i].length; j += 1) {
-                if (element.items[i][j].qualityLevel >= 5) {
+              for (let j = i + 1; j < store.items[i].length; j += 1) {
+                if (store.items[i][j].qualityLevel >= 5) {
                   break;
                 } else {
                   pity += 1;
@@ -482,20 +466,6 @@ export class ConveneService implements OnApplicationBootstrap {
               };
               summaryData[matchBanner.name].fiveStarList[convene.name].total +=
                 1;
-
-              // fiveStarWinRateOff
-              if (matchBanner.featuredRare) {
-                totalFiveStar[matchBanner.name] ??= 0;
-                totalFiveStarWin[matchBanner.name] ??= 0;
-
-                totalFiveStar[matchBanner.name] += 1;
-                if (matchBanner.featuredRare === conveneName) {
-                  totalFiveStarWin[matchBanner.name] += 1;
-                  totalWinRateOff[matchBanner.name][0] += 1;
-                } else {
-                  totalWinRateOff[matchBanner.name][1] += 1;
-                }
-              }
             } else if (convene.qualityLevel === 4) {
               // fourStarList
               summaryData[matchBanner.name].fourStarList[convene.name] ??= {
@@ -504,20 +474,6 @@ export class ConveneService implements OnApplicationBootstrap {
               };
               summaryData[matchBanner.name].fourStarList[convene.name].total +=
                 1;
-
-              // fourStarWinRateOff
-              if (matchBanner.featured) {
-                totalFourStar[matchBanner.name] ??= 1;
-                totalFourStarWin[matchBanner.name] ??= 0;
-
-                totalFourStar[matchBanner.name] += 1;
-                if (matchBanner.featured.includes(conveneName)) {
-                  totalFourStarWin[matchBanner.name] += 1;
-                  totalWinRateOff[matchBanner.name][0] += 1;
-                } else {
-                  totalWinRateOff[matchBanner.name][1] += 1;
-                }
-              }
             }
           }
         }
@@ -535,9 +491,6 @@ export class ConveneService implements OnApplicationBootstrap {
           summaryData[banner].fourStarWinRate[rate] ??= 0;
           summaryData[banner].fourStarWinRate[rate] += 1;
         });
-
-        // totalWinRateOff
-        // const luckinessWinRateData
 
         const luckinessFiveStar = Object.keys(totalFiveStarWin)
           .map((e) => {
@@ -680,14 +633,11 @@ export class ConveneService implements OnApplicationBootstrap {
     const luckinessDataFile = path.resolve(this.tempData, 'luckinessData.json');
     fs.writeFileSync(
       luckinessDataFile,
-      JSON.stringify({
-        fiveStar: Object.keys(luckinessFiveStarData).map((e) => {
-          return [parseFloat(e), luckinessFiveStarData[e]];
+      JSON.stringify(
+        Object.keys(luckinessData).map((e) => {
+          return [parseFloat(e), luckinessData[e]];
         }),
-        fourStar: Object.keys(luckinessFourStarData).map((e) => {
-          return [parseFloat(e), luckinessFourStarData[e]];
-        }),
-      }),
+      ),
     );
   }
 
@@ -703,5 +653,17 @@ export class ConveneService implements OnApplicationBootstrap {
       ? JSON.parse(fs.readFileSync(luckinessDataFile, 'utf-8'))
       : [];
     return { items, pullData, luckinessData };
+  }
+
+  async getConveneName(convene: IConvene): Promise<string> {
+    const character = this.resourceService.characters.find(
+      (e) => e.id === convene.resourceId,
+    );
+    if (character) return character.name;
+    const weapon = this.resourceService.weapons.find(
+      (e) => e.id === convene.resourceId,
+    );
+    if (weapon) return weapon.name;
+    return convene.name;
   }
 }

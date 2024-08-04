@@ -1,4 +1,4 @@
-export interface IConveneHistory {
+export interface IConvene {
   time: string;
   name: string;
   resourceId: number;
@@ -9,5 +9,5 @@ export interface IConveneHistory {
 export interface IAfterImportConveneEventArgs {
   playerId: number;
   serverId: string;
-  items: IConveneHistory[][];
+  items: IConvene[][];
 }

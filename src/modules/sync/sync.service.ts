@@ -7,7 +7,6 @@ import {
 } from '@aws-sdk/client-s3';
 import {
   BadGatewayException,
-  BadRequestException,
   Injectable,
   Logger,
   OnApplicationBootstrap,
@@ -99,17 +98,8 @@ export class SyncService implements OnApplicationBootstrap {
     const key = user.toString();
     this.logger.verbose(`push(${key})`);
 
-    const json = JSON.parse(args.data);
-    if (!json) throw new BadRequestException('json is required');
-    if (!json.collections) throw new BadRequestException('invalid data');
-    if (typeof json.instanceToken !== 'string') {
-      throw new BadRequestException('invalid data');
-    }
-    if (typeof json.name !== 'string') {
-      throw new BadRequestException('invalid data');
-    }
-
     try {
+      const json = JSON.parse(args.data);
       const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
       const command = new PutObjectCommand({
         Key: `${SYNC_S3_PATH}/${key}.json`,
