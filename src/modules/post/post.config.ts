@@ -33,4 +33,4 @@ export default {
 
 export const POST_TITLE_LENGTH = [40, 160];
 export const POST_DESCRIPTION_LENGTH = [150, 300];
-export const POST_CONTENT_LENGTH = [500, 50000];
+export const POST_CONTENT_LENGTH = [200, 50000];

@@ -11,7 +11,6 @@ import {
   ArrayMaxSize,
   IsArray,
   IsObject,
-  IsDateString,
   IsDate,
 } from 'class-validator';
 import striptags from 'striptags';
@@ -82,7 +81,7 @@ export class PostCreateBodyDto {
   contentLocalized: { [key: string]: string };
 
   @IsString()
-  @Length(5, 200)
+  @Length(5, 500)
   keywords: string;
 
   @IsDate()
