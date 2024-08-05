@@ -55,7 +55,7 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.verbose(`pull(${key})`);
+    this.logger.log(`pull(${key})`);
 
     options ??= {};
 
@@ -65,7 +65,9 @@ export class SyncService implements OnApplicationBootstrap {
         Key: `${SYNC_S3_PATH}/${key}.json`,
         Bucket: SYNC_S3_BUCKET,
       });
+      this.logger.log(`pull(${key}) send`);
       const result = await this.client.send(command);
+      this.logger.log(`pull(${key}) done`);
 
       return {
         size: result.ContentLength || 0,
@@ -96,7 +98,7 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.verbose(`push(${key})`);
+    this.logger.log(`push(${key})`);
 
     try {
       const json = JSON.parse(args.data);
@@ -107,7 +109,9 @@ export class SyncService implements OnApplicationBootstrap {
         Bucket: SYNC_S3_BUCKET,
         ACL: 'private',
       });
+      this.logger.log(`push(${key}) send`);
       await this.client.send(command);
+      this.logger.log(`push(${key}) done`);
     } catch (error) {
       this.logger.error(error);
       throw new BadGatewayException(error.message);

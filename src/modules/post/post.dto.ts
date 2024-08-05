@@ -82,7 +82,7 @@ export class PostCreateBodyDto {
   contentLocalized: { [key: string]: string };
 
   @IsString()
-  @Length(5, 500)
+  @Length(5, 200)
   keywords: string;
 
   @IsDate()

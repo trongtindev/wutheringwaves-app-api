@@ -41,6 +41,10 @@ export class PostService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     this.categories = await this.initialCategories([
       {
+        slug: 'notice',
+        name: 'Notices',
+      },
+      {
         slug: 'characters',
         name: 'Characters',
       },
