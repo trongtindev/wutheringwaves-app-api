@@ -25,10 +25,17 @@ export class GithubController {
     @Body() body: GithubCommitBodyDto,
   ) {
     const content = await prettier.format(body.data, {
-      endOfLine: 'lf',
       parser: 'json',
+      endOfLine: 'lf',
       plugins: [prettierSortJson],
+      quoteProps: 'as-needed',
+      singleQuote: true,
+      trailingComma: 'all',
     });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(content);
+      return;
+    }
     return await this.githubService.commit(user, { path: body.path, content });
   }
 }
