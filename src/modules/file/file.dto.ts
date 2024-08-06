@@ -15,8 +15,14 @@ import {
 export class UploadFileBodyDto {
   @IsFile()
   @MinFileSize(1024)
-  @MaxFileSize(1024 * 1024 * 10)
-  @HasMimeType(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
+  @MaxFileSize(1024 * 1024 * 15)
+  @HasMimeType([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+  ])
   @ValidateIf((object, value) => typeof value !== 'undefined')
   file?: MemoryStoredFile;
 
@@ -25,9 +31,12 @@ export class UploadFileBodyDto {
   @IsFile({ each: true })
   @MinFileSize(1024, { each: true })
   @MaxFileSize(1024 * 1024 * 10, { each: true })
-  @HasMimeType(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'], {
-    each: true,
-  })
+  @HasMimeType(
+    ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+    {
+      each: true,
+    },
+  )
   @ValidateIf((object, value) => typeof value !== 'undefined')
   files?: MemoryStoredFile[];
 }

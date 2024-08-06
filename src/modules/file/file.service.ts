@@ -1,16 +1,13 @@
 import {
-  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
   OnApplicationBootstrap,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   DeleteObjectCommand,
   PutObjectCommand,
-  PutObjectAclCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import * as fs from 'fs';

@@ -27,6 +27,7 @@ export class FileEvents implements OnApplicationBootstrap {
 
   @OnEvent(FileEventType.afterUpload)
   async sendQueueOptimize(args: IFileUploadedEventArgs) {
+    if (args.document.type === 'image/gif') return;
     this.logger.verbose(`sendQueueOptimize(${args.document.id})`);
 
     const tempFile = path.resolve(
@@ -40,7 +41,7 @@ export class FileEvents implements OnApplicationBootstrap {
       file: tempFile,
     };
     await this.fileQueue.add('optimize', jobData, {
-      delay: 60 * 5 * 1000,
+      delay: process.env.NODE_ENV === 'development' ? 0 : 60 * 5 * 1000,
     });
   }
 }
