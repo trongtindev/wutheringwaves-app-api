@@ -21,7 +21,7 @@ import path from 'path';
 import { ResourceService } from '../resource/resource.service';
 import { timeOffsetIds } from './convene.config';
 import { CardPoolType } from '../resource/resource.interface';
-import { calculateWinRate } from './convene.utils';
+import { calculateAvg, calculateWinRate } from './convene.utils';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
@@ -277,6 +277,12 @@ export class ConveneService implements OnApplicationBootstrap {
     const luckinessFourStarData: {
       [key: string]: number;
     } = {};
+    const fourAvgData: {
+      [key: string]: number;
+    } = {};
+    const fiveAvgData: {
+      [key: string]: number;
+    } = {};
 
     const summaryData: {
       [key: string]: {
@@ -336,8 +342,19 @@ export class ConveneService implements OnApplicationBootstrap {
         pullData[`${totalPulls}`] ??= 0;
         pullData[`${totalPulls}`] += 1;
 
+        const avg = calculateAvg({ convenes: store.items.flatMap((e) => e) });
+        if (avg.fourAvg >= 0) {
+          fourAvgData[`${avg.fourAvg}`] ??= 0;
+          fourAvgData[`${avg.fourAvg}`] += 1;
+        }
+        if (avg.fiveAvg >= 0) {
+          fiveAvgData[`${avg.fiveAvg}`] ??= 0;
+          fiveAvgData[`${avg.fiveAvg}`] += 1;
+        }
+
         for (let i = 0; i < store.items.length; i += 1) {
           const cardPoolType = i + 1;
+
           const winRate =
             cardPoolType === CardPoolType['featured-resonator']
               ? calculateWinRate({
@@ -639,6 +656,26 @@ export class ConveneService implements OnApplicationBootstrap {
         }),
       ),
     );
+
+    const fourAvgDataFile = path.resolve(this.tempData, 'fourAvgData.json');
+    fs.writeFileSync(
+      fourAvgDataFile,
+      JSON.stringify(
+        Object.keys(fourAvgData).map((e) => {
+          return [parseFloat(e), fourAvgData[e]];
+        }),
+      ),
+    );
+
+    const fiveAvgDataFile = path.resolve(this.tempData, 'fiveAvgData.json');
+    fs.writeFileSync(
+      fiveAvgDataFile,
+      JSON.stringify(
+        Object.keys(fiveAvgData).map((e) => {
+          return [parseFloat(e), fiveAvgData[e]];
+        }),
+      ),
+    );
   }
 
   async summary() {
@@ -652,7 +689,18 @@ export class ConveneService implements OnApplicationBootstrap {
     const luckinessData = fs.existsSync(luckinessDataFile)
       ? JSON.parse(fs.readFileSync(luckinessDataFile, 'utf-8'))
       : [];
-    return { items, pullData, luckinessData };
+
+    const fourAvgDataFile = path.resolve(this.tempData, 'fourAvgData.json');
+    const fourAvgData = fs.existsSync(fourAvgDataFile)
+      ? JSON.parse(fs.readFileSync(fourAvgDataFile, 'utf-8'))
+      : [];
+
+    const fiveAvgDataFile = path.resolve(this.tempData, 'fiveAvgData.json');
+    const fiveAvgData = fs.existsSync(fiveAvgDataFile)
+      ? JSON.parse(fs.readFileSync(fiveAvgDataFile, 'utf-8'))
+      : [];
+
+    return { items, pullData, luckinessData, fourAvgData, fiveAvgData };
   }
 
   async getConveneName(convene: IConvene): Promise<string> {
