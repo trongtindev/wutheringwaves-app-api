@@ -23,6 +23,14 @@ export class SyncService implements OnApplicationBootstrap {
   constructor(private eventEmitter: EventEmitter2) {}
 
   onApplicationBootstrap() {
+    this.logger.verbose('onApplicationBootstrap');
+    this.initialize();
+  }
+
+  async initialize() {
+    // destroy old instance
+    if (this.client) this.client.destroy();
+
     const {
       SYNC_S3_PATH,
       SYNC_S3_ENDPOINT,
@@ -55,7 +63,7 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.log(`pull(${key})`);
+    this.logger.verbose(`pull(${key})`);
 
     options ??= {};
 
@@ -65,9 +73,7 @@ export class SyncService implements OnApplicationBootstrap {
         Key: `${SYNC_S3_PATH}/${key}.json`,
         Bucket: SYNC_S3_BUCKET,
       });
-      this.logger.log(`pull(${key}) send`);
       const result = await this.client.send(command);
-      this.logger.log(`pull(${key}) done`);
 
       return {
         size: result.ContentLength || 0,
@@ -98,7 +104,7 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.log(`push(${key})`);
+    this.logger.verbose(`push(${key})`);
 
     try {
       const json = JSON.parse(args.data);
