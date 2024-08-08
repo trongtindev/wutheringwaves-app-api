@@ -7,6 +7,7 @@ import { UserDocument } from '../user/user.schema';
 import { GithubCommitBodyDto } from './github.dto';
 import * as prettier from 'prettier';
 import * as prettierSortJson from 'prettier-plugin-sort-json';
+import fs from 'fs';
 
 @Controller('github')
 export class GithubController {
@@ -34,6 +35,7 @@ export class GithubController {
     });
     if (process.env.NODE_ENV === 'development') {
       console.log(content);
+      fs.writeFileSync('./.tmp/commit.json', content);
       return;
     }
     return await this.githubService.commit(user, { path: body.path, content });

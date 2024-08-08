@@ -13,8 +13,8 @@
     "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "node dist/main",
     "build": "nest build",
-    "git:production": "git checkout production && git merge main && git push && git checkout main",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "release": "git checkout production && git merge main && git push && git checkout main",
+    "format": "npx prettier ./ --write",
     "lint": "eslint ./src --ignore-path .gitignore",
     "typecheck": "nest build -b swc --type-check",
     "preinstall": "npx only-allow pnpm"

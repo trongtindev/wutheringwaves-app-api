@@ -1,7 +1,7 @@
 {
-  "editor.formatOnSave": false,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "git.ignoreLimitWarning": true,
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  },
   "cSpell.words": [
     "appspot",
     "astrite",
@@ -26,7 +26,8 @@
     "wuthering",
     "wutheringwaves"
   ],
-  "[dockerfile]": {
-    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-  }
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.wordWrap": "on",
+  "git.ignoreLimitWarning": true
 }

@@ -12,9 +12,9 @@
       "  providers: [ExampleService],",
       "  exports: [ExampleService]",
       "})",
-      "export class ExampleModule {}"
+      "export class ExampleModule {}",
     ],
-    "description": "vue template"
+    "description": "vue template",
   },
   "service template": {
     "prefix": "service",
@@ -29,9 +29,9 @@
       "  constructor(",
       "    private eventEmitter: EventEmitter2,",
       "  ) {}",
-      "}"
+      "}",
     ],
-    "description": "service template"
+    "description": "service template",
   },
   "service with model template": {
     "prefix": "service model",
@@ -49,9 +49,9 @@
       "    @InjectModel(Example.name) private model: Model<Example>,",
       "    private eventEmitter: EventEmitter2,",
       "  ) {}",
-      "}"
+      "}",
     ],
-    "description": "service with model template"
+    "description": "service with model template",
   },
   "schema template": {
     "prefix": "schema",
@@ -74,9 +74,9 @@
       "}",
       "",
       "export const ExampleSchema = SchemaFactory.createForClass(Example);",
-      ""
+      "",
     ],
-    "description": "schema template"
+    "description": "schema template",
   },
   "schedule template": {
     "prefix": "schedule",
@@ -92,9 +92,9 @@
       "  @Cron('* * * * *')",
       "  async start() {}",
       "}",
-      ""
+      "",
     ],
-    "description": "schedule template"
+    "description": "schedule template",
   },
   "controller template": {
     "prefix": "controller",
@@ -106,8 +106,8 @@
       "export class ExampleController{",
       "  constructor(private exampleService: ExampleService) {}",
       "}",
-      ""
+      "",
     ],
-    "description": "controller template"
-  }
+    "description": "controller template",
+  },
 }
