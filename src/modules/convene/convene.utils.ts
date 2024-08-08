@@ -48,16 +48,16 @@ export const calculateWinRate = (args: {
     }
 
     if (
-      banner.featuredRare !== convene.name &&
-      banner.featuredSecondaryRare &&
-      banner.featuredSecondaryRare !== convene.name
+      banner.featuredRare === convene.name ||
+      (banner.featuredSecondaryRare &&
+        banner.featuredSecondaryRare === convene.name)
     ) {
-      lastLoss = true;
+      win += 1;
       totalExceptGuaranteed += 1;
     } else if (lastLoss) {
       lastLoss = false;
     } else {
-      win += 1;
+      lastLoss = true;
       totalExceptGuaranteed += 1;
     }
   }
