@@ -8,6 +8,7 @@ export class FileSchedule {
 
   @Cron('*/15 * * * *')
   async cleanup() {
+    if (process.env.TYPE === 'secondary') return;
     await this.fileService.cleanup();
   }
 }

@@ -9,6 +9,7 @@ export class DiscordSchedule {
 
   @Cron('*/5 * * * *')
   async refreshMembers() {
+    if (process.env.TYPE === 'secondary') return;
     await this.discordService.getMembers();
   }
 }

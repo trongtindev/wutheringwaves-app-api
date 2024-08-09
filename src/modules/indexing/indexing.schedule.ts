@@ -8,6 +8,7 @@ export class IndexingSchedule {
 
   @Cron('0 * * * *')
   async submit() {
+    if (process.env.TYPE === 'secondary') return;
     if (process.env.NODE_ENV !== 'production') return;
     this.indexNowService.nowSubmitUrls();
     await this.indexNowService.googleSubmitUrls();
