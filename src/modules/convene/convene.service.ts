@@ -1,18 +1,10 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConveneStore, ConveneSummary } from './convene.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProxyService } from '../proxy/proxy.service';
 import { ConveneEventType } from './convene.types';
 import { IAfterImportConveneEventArgs, IConvene } from './convene.interface';
-import Bottleneck from 'bottleneck';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import dayjs from 'dayjs';
@@ -22,6 +14,7 @@ import { ResourceService } from '../resource/resource.service';
 import { timeOffsetIds } from './convene.config';
 import { CardPoolType } from '../resource/resource.interface';
 import { calculateAvg, calculateWinRate } from './convene.utils';
+import { ImportConveneBodyDto } from './convene.dto';
 
 @Injectable()
 export class ConveneService implements OnApplicationBootstrap {
@@ -34,7 +27,6 @@ export class ConveneService implements OnApplicationBootstrap {
     private conveneStoreModel: Model<ConveneStore>,
     @InjectModel(ConveneSummary.name)
     private conveneSummaryModel: Model<ConveneSummary>,
-    private proxyService: ProxyService,
     private resourceService: ResourceService,
   ) {}
 
@@ -64,110 +56,14 @@ export class ConveneService implements OnApplicationBootstrap {
   /**
    *
    */
-  async import(
-    url: string,
-    args: {
-      userAgent: string;
-      skipMerge?: boolean;
-    },
-  ) {
-    this.logger.verbose(`import(${url})`);
-
-    const uri = new URL(url.replaceAll('index.html#', 'index.html'));
-    const lang = uri.searchParams.get('lang');
-    const svr_id = uri.searchParams.get('svr_id');
-    const player_id = uri.searchParams.get('player_id');
-    const resources_id = uri.searchParams.get('resources_id');
-    const record_id = uri.searchParams.get('record_id');
-
-    if (!lang) throw new BadRequestException('lang not found');
-    if (!svr_id) throw new BadRequestException('svr_id not found');
-    if (!player_id) throw new BadRequestException('player_id not found');
-    if (!resources_id) throw new BadRequestException('resources_id not found');
-    if (!record_id) throw new BadRequestException('record_id not found');
-
-    const worker = new Bottleneck({ maxConcurrent: 3 });
-    const handle = async (cardPoolType: number) => {
-      const response = await this.proxyService.useWorker(
-        'https://gmserver-api.aki-game2.net/gacha/record/query',
-        {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-            Origin: 'https://aki-gm-resources-oversea.aki-game.net',
-            Priority: 'u=1, i',
-            Referer: 'https://aki-gm-resources-oversea.aki-game.net/',
-            'User-Agent': args.userAgent,
-          },
-          body: {
-            cardPoolId: resources_id,
-            cardPoolType,
-            languageCode: lang,
-            playerId: player_id,
-            recordId: record_id,
-            serverId: svr_id,
-          },
-        },
-      );
-
-      const data: IConvene[] = JSON.parse(response.data.text).data;
-      return data.map((convene) => {
-        if (!convene.time) throw new BadGatewayException('missing field time');
-        if (!convene.name) throw new BadGatewayException('missing field name');
-        if (!convene.qualityLevel) {
-          throw new BadGatewayException('missing field qualityLevel');
-        }
-        if (!convene.resourceId) {
-          throw new BadGatewayException('missing field resourceId');
-        }
-        if (!convene.resourceType) {
-          throw new BadGatewayException('missing field resourceType');
-        }
-
-        const [name, resourceType] = (() => {
-          const character = this.resourceService.characters.find(
-            (e) => e.id === convene.resourceId,
-          );
-          if (character) {
-            return [character.name, 'Resonator'];
-          }
-
-          const weapon = this.resourceService.weapons.find(
-            (e) => e.id === convene.resourceId,
-          );
-          if (weapon) {
-            return [weapon.name, 'Weapon'];
-          }
-
-          return [null, null];
-        })();
-
-        if (!name || !resourceType) {
-          this.logger.warn(
-            `import() not found ${convene.resourceId} in ${convene.resourceType}`,
-          );
-        }
-
-        return {
-          name: name || convene.name,
-          time: convene.time,
-          resourceId: convene.resourceId,
-          resourceType: resourceType || convene.resourceType,
-          qualityLevel: convene.qualityLevel,
-        };
-      }) as IConvene[];
-    };
-    const chunks = await Promise.all(
-      Array.from(Array(7).keys()).map((cardPoolType) => {
-        return worker.schedule(() => {
-          return handle(cardPoolType + 1);
-        });
-      }),
-    );
+  async import(args: ImportConveneBodyDto) {
+    const chunks = args.chunks;
+    const playerId = parseInt(args.playerId);
+    const serverId = args.serverId;
 
     // store
     await this.conveneStoreModel.updateOne(
-      { playerId: parseInt(player_id) },
+      { playerId },
       {
         $set: {
           updatedAt: new Date(),
@@ -177,9 +73,7 @@ export class ConveneService implements OnApplicationBootstrap {
         upsert: true,
       },
     );
-    const store = await this.conveneStoreModel.findOne({
-      playerId: parseInt(player_id),
-    });
+    const store = await this.conveneStoreModel.findOne({ playerId });
 
     // merge
     const items: IConvene[][] = Array.from(Array(7).keys()).map(() => []);
@@ -207,22 +101,18 @@ export class ConveneService implements OnApplicationBootstrap {
         mergeEnd += 1;
       }
 
-      if (args.skipMerge) {
-        items[i] = chunks[i];
-      } else {
-        items[i] = [
-          ...chunks[i].slice(0, mergeEnd),
-          ...(store.items.length - 1 >= i ? store.items[i] : []),
-        ];
-      }
+      items[i] = [
+        ...chunks[i].slice(0, mergeEnd),
+        ...(store.items.length - 1 >= i ? store.items[i] : []),
+      ];
     }
 
     // update
     await this.conveneStoreModel.updateOne(
-      { playerId: parseInt(player_id) },
+      { playerId },
       {
         $set: {
-          serverId: svr_id,
+          serverId,
           items,
         },
       },
@@ -230,8 +120,8 @@ export class ConveneService implements OnApplicationBootstrap {
 
     // emit event
     const eventArgs: IAfterImportConveneEventArgs = {
-      playerId: parseInt(player_id),
-      serverId: svr_id,
+      playerId,
+      serverId,
       items,
     };
     await this.eventEmitter.emitAsync(
@@ -241,8 +131,8 @@ export class ConveneService implements OnApplicationBootstrap {
     this.eventEmitter.emit(ConveneEventType.afterImport, eventArgs);
 
     return {
-      playerId: parseInt(player_id),
-      serverId: svr_id,
+      playerId,
+      serverId,
       items: Object.keys(items)
         .map((key) => {
           return items[key].map((convene: IConvene) => {

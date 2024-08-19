@@ -1,13 +1,11 @@
-import { IsBoolean, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class ImportConveneBodyDto {
-  @IsUrl()
-  url: string;
+  chunks: any[][];
 
   @IsString()
-  userAgent: string;
+  playerId: string;
 
-  @IsBoolean()
-  @IsOptional()
-  skipMerge?: boolean;
+  @IsString()
+  serverId: string;
 }

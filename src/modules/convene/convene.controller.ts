@@ -10,10 +10,7 @@ export class ConveneController {
   @UseGuards(AuthGuardNullable)
   @Post('import')
   async import(@Body() body: ImportConveneBodyDto) {
-    return await this.conveneService.import(body.url, {
-      userAgent: body.userAgent,
-      skipMerge: body.skipMerge,
-    });
+    return await this.conveneService.import(body);
   }
 
   @Get('summary')

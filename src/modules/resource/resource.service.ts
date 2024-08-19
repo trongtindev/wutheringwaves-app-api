@@ -72,10 +72,10 @@ export class ResourceService implements OnApplicationBootstrap {
 
     const loadTrophies = async () => {
       this.logger.log(`loadTrophies()`);
-      const trophies = await this.request.get<ITrophy[]>(
+      const trophies = await this.request.get<{ items: ITrophy[] }>(
         '/api/resources/trophies',
       );
-      this.trophies = trophies.data;
+      this.trophies = trophies.data.items;
       this.logger.log(`loadTrophies() ${this.trophies.length}`);
     };
 

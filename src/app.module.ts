@@ -9,7 +9,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
 import { AuthModule } from './modules/auth/auth.module';
-import { ProxyModule } from './modules/proxy/proxy.module';
 import { ConveneModule } from './modules/convene/convene.module';
 import { TierListModule } from './modules/tier-list/tier-list.module';
 import { UserModule } from './modules/user/user.module';
@@ -99,7 +98,6 @@ assert(MONGO_PASS);
     // custom modules
     AuthModule,
     SyncModule,
-    ProxyModule,
     ConveneModule,
     TierListModule,
     UserModule,
