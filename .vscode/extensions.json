@@ -3,7 +3,6 @@
     "editorconfig.editorconfig",
     "dbaeumer.vscode-eslint",
     "ms-azuretools.vscode-docker",
-    "streetsidesoftware.code-spell-checker",
     "esbenp.prettier-vscode",
     "gruntfuggly.todo-tree"
   ]
