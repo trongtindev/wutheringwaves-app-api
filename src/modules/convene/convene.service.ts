@@ -42,20 +42,8 @@ export class ConveneService implements OnApplicationBootstrap {
       retryCondition: () => true,
       retryDelay: (count) => count * 1000,
     });
-
-    // this.initialize();
   }
 
-  async initialize() {
-    // start global calculate
-    if (process.env.NODE_ENV === 'development') {
-      this.globalStatsCalculate();
-    }
-  }
-
-  /**
-   *
-   */
   async import(args: ImportConveneBodyDto) {
     const chunks = args.chunks;
     const playerId = parseInt(args.playerId);
@@ -252,6 +240,7 @@ export class ConveneService implements OnApplicationBootstrap {
                   convenes: store.items[i],
                   banners,
                   timeOffset,
+                  qualityLevel: 5,
                 })
               : undefined;
           if (winRate) {

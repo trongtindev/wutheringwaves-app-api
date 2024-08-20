@@ -1,5 +1,5 @@
 import { IBanner } from '@/modules/resource/resource.interface';
-import dayjs from 'dayjs';
+import moment from 'moment';
 import { IConvene } from './convene.interface';
 
 export const calculateAvg = (args: { convenes: IConvene[] }) => {
@@ -41,8 +41,9 @@ export const calculateWinRate = (args: {
   banners: IBanner[];
   convenes: IConvene[];
   timeOffset: number;
+  qualityLevel: number;
 }) => {
-  const { type, banners, convenes, timeOffset } = args;
+  const { type, banners, convenes, timeOffset, qualityLevel } = args;
 
   let win = 0;
   let lastLoss = false;
@@ -50,15 +51,15 @@ export const calculateWinRate = (args: {
 
   for (let i = convenes.length - 1; i >= 0; i -= 1) {
     const convene = convenes[i];
-    if (convene.qualityLevel < 5) continue;
+    if (convene.qualityLevel !== qualityLevel) continue;
 
     const matchBanners = banners.filter((banner) => {
       if (banner.time) {
-        const conveneTime = dayjs(convene.time).utcOffset(timeOffset);
-        const timeStart = dayjs(banner.time.start)
+        const conveneTime = moment(convene.time).utcOffset(timeOffset);
+        const timeStart = moment(banner.time.start)
           .utcOffset(8)
           .add(timeOffset - 8, 'hours');
-        const timeEnd = dayjs(banner.time.end)
+        const timeEnd = moment(banner.time.end)
           .utcOffset(8)
           .add(timeOffset - 8, 'hours');
 
@@ -70,22 +71,24 @@ export const calculateWinRate = (args: {
       }
       return banner.type === type;
     });
+
     if (matchBanners.length === 0) {
-      console.warn('matchBanners', convene.name, matchBanners);
+      lastLoss = true;
+      totalExceptGuaranteed += 1;
       continue;
     }
 
-    const banner = matchBanners.first();
+    const banner = matchBanners[0];
     if (!banner.featuredRare) {
       console.warn(banner.name, 'featuredRare', undefined);
       continue;
     }
 
-    if (
+    const containsInBanner =
       banner.featuredRare === convene.name ||
       (banner.featuredSecondaryRare &&
-        banner.featuredSecondaryRare === convene.name)
-    ) {
+        banner.featuredSecondaryRare === convene.name);
+    if (!lastLoss && containsInBanner) {
       win += 1;
       totalExceptGuaranteed += 1;
     } else if (lastLoss) {
