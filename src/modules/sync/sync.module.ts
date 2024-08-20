@@ -4,7 +4,6 @@ import { SyncService } from './sync.service';
 
 @Global()
 @Module({
-  imports: [],
   controllers: [SyncController],
   providers: [SyncService],
   exports: [SyncService],

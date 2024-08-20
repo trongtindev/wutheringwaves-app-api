@@ -5,32 +5,18 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import {
-  BadGatewayException,
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { assert } from 'console';
 import { Types } from 'mongoose';
 
 @Injectable()
-export class SyncService implements OnApplicationBootstrap {
+export class SyncService {
   private logger = new Logger(SyncService.name);
-  private client: S3Client;
 
   constructor(private eventEmitter: EventEmitter2) {}
 
-  onApplicationBootstrap() {
-    this.logger.verbose('onApplicationBootstrap');
-    this.initialize();
-  }
-
-  async initialize() {
-    // destroy old instance
-    if (this.client) this.client.destroy();
-
+  get client() {
     const {
       SYNC_S3_PATH,
       SYNC_S3_ENDPOINT,
@@ -46,7 +32,7 @@ export class SyncService implements OnApplicationBootstrap {
     assert(SYNC_S3_ACCESS_KEY_ID);
     assert(SYNC_S3_SECRET_ACCESS_KEY);
 
-    this.client = new S3Client({
+    return new S3Client({
       region: SYNC_S3_REGION,
       credentials: {
         accessKeyId: SYNC_S3_ACCESS_KEY_ID,
@@ -63,17 +49,17 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.verbose(`pull(${key})`);
-
-    options ??= {};
+    const client = this.client;
 
     try {
+      options ??= {};
+
       const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
       const command = new GetObjectCommand({
         Key: `${SYNC_S3_PATH}/${key}.json`,
         Bucket: SYNC_S3_BUCKET,
       });
-      const result = await this.client.send(command);
+      const result = await client.send(command);
 
       return {
         size: result.ContentLength || 0,
@@ -94,6 +80,8 @@ export class SyncService implements OnApplicationBootstrap {
 
       this.logger.error(error);
       throw new BadGatewayException(error.message);
+    } finally {
+      client.destroy();
     }
   }
 
@@ -104,7 +92,7 @@ export class SyncService implements OnApplicationBootstrap {
     },
   ) {
     const key = user.toString();
-    this.logger.verbose(`push(${key})`);
+    const client = this.client;
 
     try {
       const json = JSON.parse(args.data);
@@ -116,11 +104,13 @@ export class SyncService implements OnApplicationBootstrap {
         ACL: 'private',
       });
       this.logger.log(`push(${key}) send`);
-      await this.client.send(command);
+      await client.send(command);
       this.logger.log(`push(${key}) done`);
     } catch (error) {
       this.logger.error(error);
       throw new BadGatewayException(error.message);
+    } finally {
+      client.destroy();
     }
 
     return await this.pull(user);
@@ -128,7 +118,7 @@ export class SyncService implements OnApplicationBootstrap {
 
   async eraseAll(user: Types.ObjectId) {
     const key = user.toString();
-    this.logger.verbose(`eraseAll(${key})`);
+    const client = this.client;
 
     try {
       const { SYNC_S3_PATH, SYNC_S3_BUCKET } = process.env;
@@ -136,10 +126,12 @@ export class SyncService implements OnApplicationBootstrap {
         Key: `${SYNC_S3_PATH}/${key}.json`,
         Bucket: SYNC_S3_BUCKET,
       });
-      await this.client.send(command);
+      await client.send(command);
     } catch (error) {
       this.logger.error(error);
       throw new BadGatewayException(error.message);
+    } finally {
+      client.destroy();
     }
   }
 }
