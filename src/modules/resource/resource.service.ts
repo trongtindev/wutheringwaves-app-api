@@ -49,24 +49,28 @@ export class ResourceService implements OnApplicationBootstrap {
 
     const loadCharacters = async () => {
       this.logger.log(`loadCharacters()`);
-      const characters = await this.request.get<ICharacter[]>(
+      const characters = await this.request.get<{ items: ICharacter[] }>(
         '/api/resources/characters',
       );
-      this.characters = characters.data;
+      this.characters = characters.data.items;
       this.logger.log(`loadCharacters() ${this.characters.length}`);
     };
 
     const loadEchoes = async () => {
       this.logger.log(`loadEchoes()`);
-      const echoes = await this.request.get<IEcho[]>('/api/resources/echoes');
-      this.echoes = echoes.data;
+      const echoes = await this.request.get<{ items: IEcho[] }>(
+        '/api/resources/echoes',
+      );
+      this.echoes = echoes.data.items;
       this.logger.log(`loadEchoes() ${this.echoes.length}`);
     };
 
     const loadItems = async () => {
       this.logger.log(`loadItems()`);
-      const items = await this.request.get<IItem[]>('/api/resources/items');
-      this.items = items.data;
+      const items = await this.request.get<{ items: IItem[] }>(
+        '/api/resources/items',
+      );
+      this.items = items.data.items;
       this.logger.log(`loadItems() ${this.items.length}`);
     };
 
@@ -81,10 +85,10 @@ export class ResourceService implements OnApplicationBootstrap {
 
     const loadWeapons = async () => {
       this.logger.log(`loadWeapons()`);
-      const weapons = await this.request.get<IWeapon[]>(
+      const weapons = await this.request.get<{ items: IWeapon[] }>(
         '/api/resources/weapons',
       );
-      this.weapons = weapons.data;
+      this.weapons = weapons.data.items;
       this.logger.log(`loadWeapons() ${this.weapons.length}`);
     };
 

@@ -34,7 +34,6 @@ export class GithubController {
       trailingComma: 'all',
     });
     if (process.env.NODE_ENV === 'development') {
-      console.log(content);
       fs.writeFileSync('./.tmp/commit.json', content);
       return;
     }
